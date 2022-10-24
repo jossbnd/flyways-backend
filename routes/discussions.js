@@ -3,11 +3,11 @@ const router = express.Router();
 const Discussion = require("../models/discussion");
 
 
-router.get("/", function(req, res, next) {
+router.get("/", (req, res) => {
   res.send("flyways discussions index");
 });
 
-router.get("/all", function (req, res, next) {
+router.get("/all", (req, res) => {
   Discussion.find().then((allDiscussions) =>
     res.json({
       allDiscussions,
