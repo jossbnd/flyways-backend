@@ -4,6 +4,12 @@ const uid2 = require("uid2");
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
 
+// liste des routes:
+// /all: montre tous les utilisateurs
+// /signup: enregistrer un nouvel utilisateur
+// /signin: se connecter
+// /delete: supprimer un utilisateur
+
 // for testing:
 // Mon Oct 24 2022 12:33:50 GMT+0200
 
