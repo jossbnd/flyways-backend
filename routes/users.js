@@ -106,15 +106,20 @@ router.post("/signup", (req, res) => {
       // l'utilisateur a été enregistré, on renvoie firstName, lastName et token pour les utiliser sur le frontend
       res.json({
         result: true,
-        msg: `user ${firstName} ${lastName} saved`,
-        firstName,
-        lastName,
-        token,
+        user: {
+          firstName,
+          lastName,
+          token,
+        },
       })
     );
   });
 });
 
+// liste des checks (dans cet ordre):
+// -les champs sont remplis
+// -l'email existe dans la db
+// -le password correspond
 router.post("/signin", (req, res) => {
   if (!checkFieldsRequest(req.body, ["password", "email"])) {
     res.json({
@@ -155,6 +160,33 @@ router.post("/signin", (req, res) => {
         token: findUser.token,
         firstName: findUser.firstName,
         lastName: findUser.lastName,
+      });
+    }
+  });
+});
+
+router.delete("/delete", (req, res) => {
+  if (!checkFieldsRequest(req.body, ["email"])) {
+    res.json({
+      // si un des champs est vide, stop
+      result: false,
+      msg: "Missing or empty fields",
+    });
+    return;
+  }
+
+  User.deleteOne({
+    token: req.body.token,
+  }).then((deletedUser) => {
+    if (deletedUser.deletedCount > 0) {
+      res.json({
+        result: true,
+        msg: `user deleted`,
+      });
+    } else {
+      res.json({
+        result: false,
+        msg: `user not found`,
       });
     }
   });
