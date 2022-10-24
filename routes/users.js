@@ -4,6 +4,9 @@ const uid2 = require("uid2");
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
 
+// for testing:
+// Mon Oct 24 2022 12:33:50 GMT+0200
+
 const {
   checkFieldsRequest,
   checkFields,
@@ -41,7 +44,7 @@ router.post("/signup", (req, res) => {
     res.json({
       // si un des champs est vide, stop
       result: false,
-      msg: "Missing or empty fields",
+      error: "Missing or empty fields",
     });
     return;
   }
@@ -68,7 +71,7 @@ router.post("/signup", (req, res) => {
       // si l'email est pris, stop
       res.json({
         result: false,
-        msg: "Email is already taken",
+        error: "Email is already taken",
       });
       return;
     }
@@ -77,7 +80,8 @@ router.post("/signup", (req, res) => {
     if (!testPassword(password)) {
       res.json({
         result: false,
-        msg: "Invalid password: must be 6-20 characters long, include at least one lower case, one upper case, one digit, and no white space",
+        error:
+          "Invalid password: must be 6-20 characters long, include at least one lower case, one upper case, one digit, and no white space",
       });
       return;
     }
@@ -125,7 +129,7 @@ router.post("/signin", (req, res) => {
     res.json({
       // si un des champs est vide, stop
       result: false,
-      msg: "Missing or empty fields",
+      error: "Missing or empty fields",
     });
     return;
   }
@@ -141,14 +145,14 @@ router.post("/signin", (req, res) => {
       // si l'email n'existe pas, stop
       res.json({
         result: false,
-        msg: "email not found",
+        error: "email not found",
       });
       return;
     } else if (!bcrypt.compareSync(password, findUser.password)) {
       // si l'email existe mais le password est incorrect, stop
       res.json({
         result: false,
-        msg: "Incorrect password",
+        error: "Incorrect password",
       });
       return;
     } else {
@@ -156,10 +160,11 @@ router.post("/signin", (req, res) => {
       // on renvoie le token, firstName et lastName pour pouvoir les utiliser sur le frontend
       res.json({
         result: true,
-        msg: `user ${findUser.firstName} ${findUser.lastName} signed in`,
-        token: findUser.token,
-        firstName: findUser.firstName,
-        lastName: findUser.lastName,
+        user: {
+          token: findUser.token,
+          firstName: findUser.firstName,
+          lastName: findUser.lastName,
+        },
       });
     }
   });
@@ -170,7 +175,7 @@ router.delete("/delete", (req, res) => {
     res.json({
       // si un des champs est vide, stop
       result: false,
-      msg: "Missing or empty fields",
+      error: "Missing or empty fields",
     });
     return;
   }
@@ -186,7 +191,7 @@ router.delete("/delete", (req, res) => {
     } else {
       res.json({
         result: false,
-        msg: `user not found`,
+        error: `user not found`,
       });
     }
   });
