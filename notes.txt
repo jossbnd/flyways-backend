@@ -1,0 +1,3 @@
+TODO:
+change user model dob to Date only
+after adding pax, change isFull to true if trip is full
