@@ -8,6 +8,7 @@ const {
   checkFieldsRequest,
   checkFields,
 } = require("../modules/checkFieldsRequire");
+const { testPassword } = require("../modules/passwordValidityCheck");
 
 router.get("/", (req, res) => {
   res.send("flyways users index");
@@ -21,7 +22,12 @@ router.get("/all", (req, res) => {
   );
 });
 
-router.post("/signup", async (req, res) => {
+// liste des checks (dans cet ordre):
+// -tous les champs sont bien remplis
+// -dob est bien une date JS
+// -email pas pris
+// -password valide
+router.post("/signup", (req, res) => {
   // check si un champ est vide
   if (
     !checkFieldsRequest(req.body, [
@@ -67,7 +73,16 @@ router.post("/signup", async (req, res) => {
       return;
     }
 
-    // les champs sont remplis et l'email n'est pas pris: enregistre le nouvel utilisateur
+    // check la validité du password
+    if (!testPassword(password)) {
+      res.json({
+        result: false,
+        msg: "Invalid password: must be 6-20 characters long, include at least one lower case, one upper case, one digit, and no white space",
+      });
+      return;
+    }
+
+    // les champs sont remplis, l'email n'est pas pris, et le password est valide: enregistre le nouvel utilisateur
     const hash = bcrypt.hashSync(password, 10);
     const token = uid2(32);
 
@@ -97,6 +112,51 @@ router.post("/signup", async (req, res) => {
         token,
       })
     );
+  });
+});
+
+router.post("/signin", (req, res) => {
+  if (!checkFieldsRequest(req.body, ["password", "email"])) {
+    res.json({
+      // si un des champs est vide, stop
+      result: false,
+      msg: "Missing or empty fields",
+    });
+    return;
+  }
+
+  const { email, password } = req.body;
+  const emailFormatted = email.toLowerCase();
+
+  User.findOne({
+    // cherche l'email dans la db
+    email: emailFormatted,
+  }).then((findUser) => {
+    if (!findUser) {
+      // si l'email n'existe pas, stop
+      res.json({
+        result: false,
+        msg: "email not found",
+      });
+      return;
+    } else if (!bcrypt.compareSync(password, findUser.password)) {
+      // si l'email existe mais le password est incorrect, stop
+      res.json({
+        result: false,
+        msg: "Incorrect password",
+      });
+      return;
+    } else {
+      // l'email existe et le passwordest correct, signin
+      // on renvoie le token, firstName et lastName pour pouvoir les utiliser sur le frontend
+      res.json({
+        result: true,
+        msg: `user ${findUser.firstName} ${findUser.lastName} signed in`,
+        token: findUser.token,
+        firstName: findUser.firstName,
+        lastName: findUser.lastName,
+      });
+    }
   });
 });
 
