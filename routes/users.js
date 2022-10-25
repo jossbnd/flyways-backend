@@ -2,16 +2,18 @@ const express = require("express");
 const router = express.Router();
 const uid2 = require("uid2");
 const bcrypt = require("bcrypt");
+const moment = require('moment');
 const User = require("../models/user");
 
 // liste des routes:
-// /all: montre tous les utilisateurs
-// /signup: enregistrer un nouvel utilisateur
-// /signin: se connecter
-// /delete: supprimer un utilisateur
-
-// for testing:
-// Mon Oct 24 2022 12:33:50 GMT+0200
+// GET /all: montre tous les utilisateurs
+// POST /signup: enregistrer un nouvel utilisateur
+// POST /signin: se connecter
+// GET /info: cherche les infos utilisateur pour le profil
+// PUT /update: mettre à jour une donnée simple utilisateur
+// PUT /verify: vérifie un utilisateur
+// PUT /updatePaymentMethod: met à jour le moyen de paiement
+// DELETE /delete: supprime un utilisateur
 
 const {
   checkFieldsRequest,
@@ -67,7 +69,6 @@ router.post("/signup", (req, res) => {
   //   });
   //   return;
   // }
-  console.log(typeof dob);
 
   // check si l'email est pris
   User.findOne({
@@ -95,17 +96,27 @@ router.post("/signup", (req, res) => {
     // les champs sont remplis, l'email n'est pas pris, et le password est valide: enregistre le nouvel utilisateur
     const hash = bcrypt.hashSync(password, 10);
     const token = uid2(32);
+    // transforme la date (string) en date JS
+    // const dobFormatted = new Date(`${dob.slice(6)}/${dob.slice(3, 5)}/${dob.slice(0, 2)}`)
+    // const dobFormattedUTC = moment(dobFormatted).utc().format();
+    // console.log(dobFormatted);
+    // console.log(dobFormattedUTC);
+
+    var dt = moment(`${dob.slice(6)}-${dob.slice(3, 5)}-${dob.slice(0, 2)}`, "YYYY-MM-DD").toDate();
 
     const newUser = new User({
       firstName,
       lastName,
-      dob,
+      dob: dt,
       email: emailFormatted,
       password: hash,
       token,
 
       // null par défault: pourront être renseignés par l'utilisateur plus tard
-      phone: { number: null, isVerified: false },
+      // phone: { number: null, isVerified: false },
+      phone: null,
+      isVerified: null,
+      languagesSpoken: [],
       gender: null,
       nationality: null,
       profilePicture: null,
@@ -176,6 +187,165 @@ router.post("/signin", (req, res) => {
   });
 });
 
+// cherche les infos utilisateur du profil
+router.get("/info", (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    // s'il manque le token, stop (ne devrait pas arriver sous des conditions normales car géré par le frontend)
+    res.json({
+      result: false,
+      error: "no user token",
+    });
+    return;
+  }
+
+  User.findOne({ token }).then((userData) => {
+    res.json({
+      result: true,
+      user: {
+        gender: userData.gender,
+        dob: userData.dob,
+        languagesSpoken: userData.languagesSpoken,
+        nationality: userData.nationality,
+        profilePicture: userData.profilePicture,
+        trips: userData.trips,
+        averageRating: userData.averageRating,
+      },
+    })
+  }
+  );
+});
+
+// mettre à jour une donnée d'utilisateur simple (photo de profil, date de naissance, etc)
+router.put("/update", (req, res) => {
+  const { token, phone, gender, dob, nationality, profilePicture } = req.body;
+
+  if (!token) {
+    // s'il manque le token, stop (ne devrait pas arriver sous des conditions normales car géré par le frontend)
+    res.json({
+      result: false,
+      error: "no user token",
+    });
+    return;
+  }
+
+  // met à jour une donnée simple en fonction de ce qu'il y a dans la requête
+  if (phone) {
+    User.updateOne({ token }, { phone, isVerified: false }).then(
+      res.json({
+        result: true,
+        msg: "user phone updated",
+      })
+    );
+  } else if (gender) {
+    User.updateOne({ token }, { gender }).then(
+      res.json({
+        result: true,
+        msg: "user gender updated",
+      })
+    );
+  } else if (dob) {
+    User.updateOne({ token }, { dob }).then(
+      res.json({
+        result: true,
+        msg: "user dob updated",
+      })
+    );
+  } else if (nationality) {
+    User.updateOne({ token }, { nationality }).then(
+      res.json({
+        result: true,
+        msg: "user nationality updated",
+      })
+    );
+  } else if (profilePicture) {
+    User.updateOne({ token }, { profilePicture }).then(
+      res.json({
+        result: true,
+        msg: "user profile picture updated",
+      })
+    );
+  } else {
+    res.json({
+      // s'il manque la donnée à mettre à jour, erreur (ne devrait pas arriver sous conditions normales)
+      result: false,
+      error: "no data to update",
+    });
+  }
+});
+
+router.put("/verify", (req, res) => {
+  const { token } = req.body;
+
+  // s'il manque le user token, stop
+  if (!token) {
+    res.json({
+      result: false,
+      error: "no user token",
+    });
+    return;
+  }
+
+  User.updateOne({ token }, { isVerified: true }).then(
+    res.json({
+      result: true,
+      msg: "user has been verified",
+    })
+  );
+});
+
+// create add/remove language route
+
+// ajouter une carte de paiement
+router.put("/updatePaymentMethod", (req, res) => {
+  if (
+    !checkFieldsRequest(req.body, [
+      "token",
+      "cardType",
+      "firstName",
+      "lastName",
+      "cardNumber",
+      "cvv",
+    ])
+  ) {
+    res.json({
+      // si un des champs est vide, stop
+      result: false,
+      error: "Missing or empty fields",
+    });
+    return;
+  }
+
+  const { token, cardType, firstName, lastName, cardNumber, cvv } = req.body;
+
+  const newPaymentMethod = {
+    cardType,
+    firstName,
+    lastName,
+    cardNumber,
+    cvv,
+  };
+
+  // cherche un utilisateur avec son token, et assigne l'objet newPaymentMethod à bankInfo
+  User.updateOne({ token }, { bankInfo: newPaymentMethod }).then(
+    (addPaymentData) => {
+      if (addPaymentData.modifiedCount === 0) {
+        res.json({
+          result: false,
+          error: "could not add payment method",
+        });
+      } else {
+        res.json({
+          result: true,
+          msg: "payment method added",
+        });
+      }
+    }
+  );
+});
+
+// supprimer un utilisateur
 router.delete("/delete", (req, res) => {
   if (!checkFieldsRequest(req.body, ["email"])) {
     res.json({
