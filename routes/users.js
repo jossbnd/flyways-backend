@@ -9,7 +9,9 @@ const User = require("../models/user");
 // POST /signup: enregistrer un nouvel utilisateur
 // POST /signin: se connecter
 // PUT /update: mettre à jour une donnée simple utilisateur
-// DELETE /delete: supprimer un utilisateur
+// PUT /verify: vérifie un utilisateur
+// PUT /updatePaymentMethod: met à jour le moyen de paiement
+// DELETE /delete: supprime un utilisateur
 
 const {
   checkFieldsRequest,
@@ -258,7 +260,7 @@ router.put("/verify", (req, res) => {
 // create add/remove language route
 
 // ajouter une carte de paiement
-router.put("/addPaymentMethod", (req, res) => {
+router.put("/updatePaymentMethod", (req, res) => {
   if (
     !checkFieldsRequest(req.body, [
       "token",
