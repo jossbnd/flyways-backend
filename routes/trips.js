@@ -53,13 +53,12 @@ router.post("/create", (req, res) => {
   );
 });
 
-// ajouter un passenger à un trip
-router.post("/addPassenger", (req, res) => {
+router.put("/addPassenger", (req, res) => {
   const { tripToken, passengerToken } = req.body;
+  const filter = { token: tripToken }; // trouve un trip avec son token
 
-  Trip.findOne({ token: tripToken }).then((trip) => {
+  Trip.findOne({ filter }).then((trip) => {
     // si le trip est complet, stop
-    // TODO: éviter de faire 2 fetchs
     if (trip.isFull) {
       res.json({
         result: false,
@@ -68,55 +67,53 @@ router.post("/addPassenger", (req, res) => {
       return;
     }
 
+    // si le trip n'est pas complet, ajoute un nouveau passager
     const newPassenger = {
       passengerToken,
       isLeader: false,
     };
 
-    Trip.updateOne(
-      {
-        token: tripToken, // trouve un trip avec son token
-      },
-      {
-        $push: { passengers: newPassenger }, // ajoute un nouveau passager au tableau "passengers"
+    // ajoute un nouveau passager au tableau "passengers"
+    Trip.updateOne({ filter }, { $push: { passengers: newPassenger } }).then(
+      (tripInfo) => {
+        if (tripInfo.modifiedCount === 0) {
+          // n'a pas pu ajouter un passager au trip (ne devrait pas arriver sous conditions normales)
+          res.json({
+            result: false,
+            error: "could not add passenger to trip",
+            tripInfo,
+          });
+        } else {
+          // a bien ajouté un passager au trip
+          res.json({
+            result: true,
+            tripInfo,
+          });
+          if (trip.passengers.length + 1 >= trip.capacity) {
+            // si le trip + le nouveau passager atteint la capacité max, isFull devient true
+            Trip.updateOne({ filter }, { isFull: true }).then();
+          }
+        }
       }
-    ).then((tripInfo) => {
-      if (tripInfo.modifiedCount === 0) {
-        // n'a pas pu ajouter un passager au trip (ne devrait pas arriver sous conditions normales)
-        res.json({
-          result: false,
-          error: "could not add passenger to trip",
-          tripInfo,
-        });
-      } else {
-        // a ajouté un passager au trip
-        res.json({
-          result: true,
-          tripInfo,
-        });
-        console.log(trip.capacity)
-        console.log(trip.passengers.length+1)
-        // TODO: change isFull to true if trip is full
-      }
-    });
+    );
   });
 });
 
 // supprimer un passager d'un trip
 router.put("/removePassenger", (req, res) => {
   const { tripToken, passengerToken } = req.body;
-  Trip.findOneAndUpdate(
-    {
-      token: tripToken,
-    },
-    {
-      $pull: { passengers: { passengerToken } },
-    }
+  const filter = { token: tripToken }; // trouver un trip avec son token
+
+  Trip.updateOne(
+    { filter }, { $pull: { passengers: { passengerToken } } } // supprime un passager avec son token
   ).then((tripInfo) => {
-    res.json({
-      result: true,
-      tripInfo,
-    });
+    // passe isFull à false
+    Trip.updateOne( { filter }, { isFull: false } ).then(
+      res.json({
+        result: true,
+        tripInfo,
+      })
+    ); 
   });
 });
 
