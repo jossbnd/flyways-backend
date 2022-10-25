@@ -1,10 +1,6 @@
 const mongoose = require("mongoose");
 
 // subdocument models
-const phoneSchema = mongoose.Schema({
-  number: String || null,
-  isVerified: Boolean,
-});
 
 const bankInfoSchema = mongoose.Schema({
   cardType: String,
@@ -40,7 +36,8 @@ const userSchema = mongoose.Schema({
   lastName: String,
   email: String,
   password: String,
-  phone: phoneSchema || null,
+  phone: String || null,
+  isVerified: Boolean,
   gender: String || null,
   dob: Date || String, // date of birth
   languagesSpoken: Array,

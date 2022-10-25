@@ -1,3 +1,8 @@
 TODO:
-change user model dob to Date only
-after adding pax, change isFull to true if trip is full
+change user model dob back to Date only
+remove GET all users before deployment
+upon creating trip, change departure and arrival addresses to work properly
+
+for testing:
+Mon Oct 24 2022 12:33:50 GMT+0200
+https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png

@@ -5,13 +5,11 @@ const bcrypt = require("bcrypt");
 const User = require("../models/user");
 
 // liste des routes:
-// /all: montre tous les utilisateurs
-// /signup: enregistrer un nouvel utilisateur
-// /signin: se connecter
-// /delete: supprimer un utilisateur
-
-// for testing:
-// Mon Oct 24 2022 12:33:50 GMT+0200
+// GET /all: montre tous les utilisateurs
+// POST /signup: enregistrer un nouvel utilisateur
+// POST /signin: se connecter
+// PUT /update: mettre à jour une donnée simple utilisateur
+// DELETE /delete: supprimer un utilisateur
 
 const {
   checkFieldsRequest,
@@ -105,7 +103,9 @@ router.post("/signup", (req, res) => {
       token,
 
       // null par défault: pourront être renseignés par l'utilisateur plus tard
-      phone: { number: null, isVerified: false },
+      // phone: { number: null, isVerified: false },
+      phone: null,
+      isVerified: null,
       gender: null,
       nationality: null,
       profilePicture: null,
@@ -176,6 +176,85 @@ router.post("/signin", (req, res) => {
   });
 });
 
+// mettre à jour une donnée d'utilisateur simple (photo de profil, date de naissance, etc)
+router.put("/update", (req, res) => {
+  const { token, phone, gender, dob, nationality, profilePicture } = req.body;
+
+  if (!token) {
+    // s'il manque le token, stop (ne devrait pas arriver sous des conditions normales car géré par le frontend)
+    res.json({
+      result: false,
+      error: "no user token",
+    });
+    return;
+  }
+
+  // met à jour une donnée simple en fonction de ce qu'il y a dans la requête
+  if (phone) {
+    User.updateOne({ token }, { phone, isVerified: false }).then(
+      res.json({
+        result: true,
+        msg: "user phone updated",
+      })
+    );
+  } else if (gender) {
+    User.updateOne({ token }, { gender }).then(
+      res.json({
+        result: true,
+        msg: "user gender updated",
+      })
+    );
+  } else if (dob) {
+    User.updateOne({ token }, { dob }).then(
+      res.json({
+        result: true,
+        msg: "user dob updated",
+      })
+    );
+  } else if (nationality) {
+    User.updateOne({ token }, { nationality }).then(
+      res.json({
+        result: true,
+        msg: "user nationality updated",
+      })
+    );
+  } else if (profilePicture) {
+    User.updateOne({ token }, { profilePicture }).then(
+      res.json({
+        result: true,
+        msg: "user profile picture updated",
+      })
+    );
+  } else {
+    res.json({
+      // s'il manque la donnée à mettre à jour, erreur (ne devrait pas arriver sous conditions normales)
+      result: false,
+      error: "no data to update",
+    });
+  }
+});
+
+router.put("/verify", (req, res) => {
+  const { token } = req.body;
+
+  // s'il manque le user token, stop
+  if (!token) {
+    res.json({
+      result: false,
+      error: "no user token",
+    });
+    return;
+  }
+
+  User.updateOne({ token }, { isVerified: true }).then(
+    res.json({
+      result: true,
+      msg: "user has been verified",
+    })
+  );
+});
+
+// supprimer un utilisateur
 router.delete("/delete", (req, res) => {
   if (!checkFieldsRequest(req.body, ["email"])) {
     res.json({

@@ -4,9 +4,11 @@ const Trip = require("../models/trip");
 const uid2 = require("uid2");
 
 // liste des routes:
-// /all: montre tous les trips
-// /create: créer un nouveau trip
-// /addPassenger: ajouter un passager à un trip
+// GET /all: montre tous les trips
+// POST /create: créée un nouveau trip
+// PUT /addPassenger: ajoute un passager à un trip
+// PUT /removePassenger: supprime un passager d'un trip
+// DELETE /removeTrip: supprime un trip
 
 router.get("/", (req, res) => {
   res.send("flyways trips index");
@@ -102,19 +104,31 @@ router.put("/addPassenger", (req, res) => {
 // supprimer un passager d'un trip
 router.put("/removePassenger", (req, res) => {
   const { tripToken, passengerToken } = req.body;
-  const filter = { token: tripToken }; // trouver un trip avec son token
+  const filter = { token: tripToken }; // trouve un trip avec son token
 
   Trip.updateOne(
-    { filter }, { $pull: { passengers: { passengerToken } } } // supprime un passager avec son token
+    { filter },
+    { $pull: { passengers: { passengerToken } } } // supprime un passager avec son token
   ).then((tripInfo) => {
     // passe isFull à false
-    Trip.updateOne( { filter }, { isFull: false } ).then(
+    Trip.updateOne({ filter }, { isFull: false }).then(
       res.json({
         result: true,
         tripInfo,
       })
-    ); 
+    );
   });
+});
+
+// supprimer un trip
+router.delete("/removeTrip", (req, res) => {
+  const { tripToken } = req.body;
+  Trip.deleteOne({ token: tripToken }).then((deletedTrip) =>
+    res.json({
+      result: true,
+      deletedTrip,
+    })
+  );
 });
 
 module.exports = router;
