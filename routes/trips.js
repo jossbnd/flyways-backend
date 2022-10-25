@@ -3,12 +3,19 @@ const router = express.Router();
 const Trip = require("../models/trip");
 const uid2 = require("uid2");
 
+const {
+  checkFieldsRequest,
+  checkFields,
+} = require("../modules/checkFieldsRequire");
+const { getDistFromCoords } = require("../modules/getDistance");
+
 // liste des routes:
 // GET /all: montre tous les trips
 // POST /create: créée un nouveau trip
 // PUT /addPassenger: ajoute un passager à un trip
 // PUT /removePassenger: supprime un passager d'un trip
 // DELETE /removeTrip: supprime un trip
+// PUT /search: chercher des trips
 
 router.get("/", (req, res) => {
   res.send("flyways trips index");
@@ -24,17 +31,45 @@ router.get("/all", (req, res) => {
 
 // créer un nouveau trip
 router.post("/create", (req, res) => {
-  const { passengerToken, departureAddress, arrivalAddress, date, capacity } =
-    req.body;
+  if (
+    !checkFieldsRequest(req.body, [
+      "passengerToken",
+      "departureCoordsLat",
+      "departureCoordsLong",
+      "arrivalCoordsLat",
+      "arrivalCoordsLong",
+      "capacity",
+    ])
+  ) {
+    res.json({
+      // si un des champs est vide, stop
+      result: false,
+      error: "Missing or empty fields",
+    });
+    return;
+  }
+
+  const {
+    passengerToken,
+    departureCoordsLat,
+    departureCoordsLong,
+    arrivalCoordsLat,
+    arrivalCoordsLong,
+    date,
+    capacity,
+  } = req.body;
 
   const token = uid2(32);
 
   const newTrip = new Trip({
     token,
     passengers: { passengerToken, isLeader: true }, // l'utilisateur qui créée le trip est leader
-    departureAddress: null,
-    arrivalAddress: null,
-    date,
+    departureCoords: {
+      latitude: departureCoordsLat,
+      longitude: departureCoordsLong,
+    },
+    arrivalCoords: { latitude: arrivalCoordsLat, longitude: arrivalCoordsLong },
+    date: new Date(),
     capacity,
     isFull: false,
     isDone: false,
@@ -46,8 +81,10 @@ router.post("/create", (req, res) => {
       trip: {
         token,
         // passengers,  FIXME: crashes the backend
-        departureAddress,
-        arrivalAddress,
+        departureCoordsLat,
+        departureCoordsLong,
+        arrivalCoordsLat,
+        arrivalCoordsLong,
         date,
         capacity,
       },
@@ -129,6 +166,46 @@ router.delete("/removeTrip", (req, res) => {
       deletedTrip,
     })
   );
+});
+
+// chercher des trips
+router.put("/search", (req, res) => {
+  // take search parameters: date, departure, destination
+  // output the non-full trips closest to your destination
+  if (
+    !checkFieldsRequest(req.body, [
+      "date",
+      "departureCoordsLat",
+      "departureCoordsLong",
+      "arrivalCoordsLat",
+      "arrivalCoordsLong",
+    ])
+  ) {
+    res.json({
+      // si un des champs est vide, stop
+      result: false,
+      error: "Missing or empty fields",
+    });
+    return;
+  }
+
+  const { departureCoordsLat, departureCoordsLong, arrivalCoordsLat, arrivalCoordsLong } = req.body;
+  // trouve les trips pas finis
+  // push trips into array then sort them depending on distance
+  Trip.find({ isDone: false }).then((tripsFound) => {
+    let tripsFoundArray = [];
+    res.json({ tripsFound });
+    for (let tripFound of tripsFound) {
+      let dist = getDistFromCoords(tripFound.arrivalCoords.latitude, tripFound.arrivalCoords.longitude, arrivalCoordsLat, arrivalCoordsLong);
+      tripsFoundArray.push(
+        {tripFoundToken: tripFound.token, distToDestination: dist}
+      );
+    }
+    // sort array by disToDestination (lowest to largest)
+    // console.log(tripsFoundArray);
+    tripsFoundArray.sort((a, b) => b.distToDest - a.distToDestination)
+    console.log(tripsFoundArray.sort((a, b) => a.distToDest - b.distToDestination));
+  });
 });
 
 module.exports = router;
