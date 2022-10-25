@@ -11,24 +11,29 @@ const airportInfoSchema = mongoose.Schema({
   gate: String,
 });
 
-const addressSchema = mongoose.Schema({
-  name: String,
-  street: String,
-  streetNumber: String,
-  postalCode: String,
-  city: String,
-  region: String,
-  country: String,
-  additionalInfo: String,
-  airportInfo: airportInfoSchema,
-});
+// const addressSchema = mongoose.Schema({
+//   name: String,
+//   street: String,
+//   streetNumber: String,
+//   postalCode: String,
+//   city: String,
+//   region: String,
+//   country: String,
+//   additionalInfo: String,
+//   airportInfo: airportInfoSchema,
+// });
+
+const coordSchema = mongoose.Schema({
+  latitude: Number,
+  longitude: Number,
+})
 
 const tripSchema = mongoose.Schema({
   token: String,
   // passengers: [{ type: mongoose.Schema.Types.ObjectId, ref: "trips" }], // le 1er passager est le leader
-  passengers: [passengerSchema], // tableau de tokens, le 1er passager est le leader
-  departureAddress: addressSchema || null,
-  arrivalAddress: addressSchema || null,
+  passengers: [passengerSchema], // tableau de tokens
+  departureCoords: coordSchema || null,
+  arrivalCoords: coordSchema || null,
   date: Date,
   capacity: Number,
   isFull: Boolean,

@@ -6,6 +6,11 @@ add/remove language route
 crypt credit card information
 create user trip (for trip history) route
 
+search trip route:
+-date and time
+-departure (same airport or within x meters)
+-destination (within x meters of wantedDestination, give dist btwn wantedDestination and actual tripDestination)
+
 for testing:
 Mon Oct 24 2022 12:33:50 GMT+0200
 https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png
