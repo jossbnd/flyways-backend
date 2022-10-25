@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const uid2 = require("uid2");
 const bcrypt = require("bcrypt");
+const moment = require('moment');
 const User = require("../models/user");
 
 // liste des routes:
@@ -68,7 +69,6 @@ router.post("/signup", (req, res) => {
   //   });
   //   return;
   // }
-  console.log(typeof dob);
 
   // check si l'email est pris
   User.findOne({
@@ -96,11 +96,18 @@ router.post("/signup", (req, res) => {
     // les champs sont remplis, l'email n'est pas pris, et le password est valide: enregistre le nouvel utilisateur
     const hash = bcrypt.hashSync(password, 10);
     const token = uid2(32);
+    // transforme la date (string) en date JS
+    // const dobFormatted = new Date(`${dob.slice(6)}/${dob.slice(3, 5)}/${dob.slice(0, 2)}`)
+    // const dobFormattedUTC = moment(dobFormatted).utc().format();
+    // console.log(dobFormatted);
+    // console.log(dobFormattedUTC);
+
+    var dt = moment(`${dob.slice(6)}-${dob.slice(3, 5)}-${dob.slice(0, 2)}`, "YYYY-MM-DD").toDate();
 
     const newUser = new User({
       firstName,
       lastName,
-      dob,
+      dob: dt,
       email: emailFormatted,
       password: hash,
       token,

@@ -42,7 +42,7 @@ const userSchema = mongoose.Schema({
   phone: String || null,
   isVerified: Boolean,
   gender: String || null,
-  dob: Date || String, // date of birth
+  dob: Date, // date of birth
   languagesSpoken: [languageSpokenSchema || null],
   nationality: String || null,
   profilePicture: String || null, // url

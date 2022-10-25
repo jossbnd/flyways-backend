@@ -3,6 +3,8 @@ change user model dob back to Date only
 remove GET all users before deployment
 upon creating trip, change departure and arrival addresses to work properly
 add/remove language route
+crypt credit card information
+create user trip (for trip history) route
 
 for testing:
 Mon Oct 24 2022 12:33:50 GMT+0200
