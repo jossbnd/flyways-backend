@@ -106,6 +106,7 @@ router.post("/signup", (req, res) => {
       // phone: { number: null, isVerified: false },
       phone: null,
       isVerified: null,
+      languagesSpoken: [],
       gender: null,
       nationality: null,
       profilePicture: null,
@@ -251,6 +252,56 @@ router.put("/verify", (req, res) => {
       result: true,
       msg: "user has been verified",
     })
+  );
+});
+
+// create add/remove language route
+
+// ajouter une carte de paiement
+router.put("/addPaymentMethod", (req, res) => {
+  if (
+    !checkFieldsRequest(req.body, [
+      "token",
+      "cardType",
+      "firstName",
+      "lastName",
+      "cardNumber",
+      "cvv",
+    ])
+  ) {
+    res.json({
+      // si un des champs est vide, stop
+      result: false,
+      error: "Missing or empty fields",
+    });
+    return;
+  }
+
+  const { token, cardType, firstName, lastName, cardNumber, cvv } = req.body;
+
+  const newPaymentMethod = {
+    cardType,
+    firstName,
+    lastName,
+    cardNumber,
+    cvv,
+  };
+
+  // cherche un utilisateur avec son token, et assigne l'objet newPaymentMethod à bankInfo
+  User.updateOne({ token }, { bankInfo: newPaymentMethod }).then(
+    (addPaymentData) => {
+      if (addPaymentData.modifiedCount === 0) {
+        res.json({
+          result: false,
+          error: "could not add payment method"
+        })
+      } else {
+        res.json({
+          result: true,
+          msg: "payment method added",
+        });
+      }
+    }
   );
 });
 

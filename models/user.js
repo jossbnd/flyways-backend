@@ -1,13 +1,16 @@
 const mongoose = require("mongoose");
 
 // subdocument models
+const languageSpokenSchema = mongoose.Schema({
+  language: String,
+});
 
 const bankInfoSchema = mongoose.Schema({
   cardType: String,
   firstName: String,
   lastName: String,
   cardNumber: String,
-  expDate: Date,
+  // expDate: Date,
   cvv: Number,
 });
 
@@ -40,13 +43,15 @@ const userSchema = mongoose.Schema({
   isVerified: Boolean,
   gender: String || null,
   dob: Date || String, // date of birth
-  languagesSpoken: Array,
+  languagesSpoken: [languageSpokenSchema || null],
   nationality: String || null,
   profilePicture: String || null, // url
   trips: [{ type: mongoose.Schema.Types.ObjectId, ref: "trips" } || null],
   bankInfo: bankInfoSchema || null,
   addresses: [addressSchema] || null,
-  discussions: [{ type: mongoose.Schema.Types.ObjectId, ref: "discussions" } || null],
+  discussions: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "discussions" } || null,
+  ],
   averageRating: Number || null,
   reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "reviews" } || null],
 });
