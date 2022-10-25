@@ -8,6 +8,7 @@ const User = require("../models/user");
 // GET /all: montre tous les utilisateurs
 // POST /signup: enregistrer un nouvel utilisateur
 // POST /signin: se connecter
+// GET /info: cherche les infos utilisateur pour le profil
 // PUT /update: mettre à jour une donnée simple utilisateur
 // PUT /verify: vérifie un utilisateur
 // PUT /updatePaymentMethod: met à jour le moyen de paiement
@@ -179,6 +180,36 @@ router.post("/signin", (req, res) => {
   });
 });
 
+// cherche les infos utilisateur du profil
+router.get("/info", (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    // s'il manque le token, stop (ne devrait pas arriver sous des conditions normales car géré par le frontend)
+    res.json({
+      result: false,
+      error: "no user token",
+    });
+    return;
+  }
+
+  User.findOne({ token }).then((userData) => {
+    res.json({
+      result: true,
+      user: {
+        gender: userData.gender,
+        dob: userData.dob,
+        languagesSpoken: userData.languagesSpoken,
+        nationality: userData.nationality,
+        profilePicture: userData.profilePicture,
+        trips: userData.trips,
+        averageRating: userData.averageRating,
+      },
+    })
+  }
+  );
+});
+
 // mettre à jour une donnée d'utilisateur simple (photo de profil, date de naissance, etc)
 router.put("/update", (req, res) => {
   const { token, phone, gender, dob, nationality, profilePicture } = req.body;
@@ -295,8 +326,8 @@ router.put("/updatePaymentMethod", (req, res) => {
       if (addPaymentData.modifiedCount === 0) {
         res.json({
           result: false,
-          error: "could not add payment method"
-        })
+          error: "could not add payment method",
+        });
       } else {
         res.json({
           result: true,
