@@ -1,7 +1,14 @@
 const express = require("express");
 const router = express.Router();
+const moment = require("moment");
 const Trip = require("../models/trip");
 const uid2 = require("uid2");
+
+const {
+  checkFieldsRequest,
+  checkFields,
+} = require("../modules/checkFieldsRequire");
+const { getDistFromCoords } = require("../modules/getDistance");
 
 // liste des routes:
 // GET /all: montre tous les trips
@@ -9,6 +16,7 @@ const uid2 = require("uid2");
 // PUT /addPassenger: ajoute un passager à un trip
 // PUT /removePassenger: supprime un passager d'un trip
 // DELETE /removeTrip: supprime un trip
+// PUT /search: chercher des trips
 
 router.get("/", (req, res) => {
   res.send("flyways trips index");
@@ -24,16 +32,45 @@ router.get("/all", (req, res) => {
 
 // créer un nouveau trip
 router.post("/create", (req, res) => {
-  const { passengerToken, departureAddress, arrivalAddress, date, capacity } =
-    req.body;
+  if (
+    !checkFieldsRequest(req.body, [
+      "passengerToken",
+      "departureCoordsLat",
+      "departureCoordsLong",
+      "arrivalCoordsLat",
+      "arrivalCoordsLong",
+      "date",
+      "capacity",
+    ])
+  ) {
+    res.json({
+      // si un des champs est vide, stop
+      result: false,
+      error: "Missing or empty fields",
+    });
+    return;
+  }
+
+  const {
+    passengerToken,
+    departureCoordsLat,
+    departureCoordsLong,
+    arrivalCoordsLat,
+    arrivalCoordsLong,
+    date,
+    capacity,
+  } = req.body;
 
   const token = uid2(32);
 
   const newTrip = new Trip({
     token,
     passengers: { passengerToken, isLeader: true }, // l'utilisateur qui créée le trip est leader
-    departureAddress: null,
-    arrivalAddress: null,
+    departureCoords: {
+      latitude: departureCoordsLat,
+      longitude: departureCoordsLong,
+    },
+    arrivalCoords: { latitude: arrivalCoordsLat, longitude: arrivalCoordsLong },
     date,
     capacity,
     isFull: false,
@@ -46,8 +83,10 @@ router.post("/create", (req, res) => {
       trip: {
         token,
         // passengers,  FIXME: crashes the backend
-        departureAddress,
-        arrivalAddress,
+        departureCoordsLat,
+        departureCoordsLong,
+        arrivalCoordsLat,
+        arrivalCoordsLong,
         date,
         capacity,
       },
@@ -129,6 +168,86 @@ router.delete("/removeTrip", (req, res) => {
       deletedTrip,
     })
   );
+});
+
+// chercher des trips
+router.put("/search", (req, res) => {
+  // take search parameters: date, departure, destination
+  // output the non-full trips closest to your destination
+  if (
+    !checkFieldsRequest(req.body, [
+      "departureCoordsLat",
+      "departureCoordsLong",
+      "arrivalCoordsLat",
+      "arrivalCoordsLong",
+      "maxDate",
+      "maxDist",
+    ])
+  ) {
+    res.json({
+      // si un des champs est vide, stop
+      result: false,
+      error: "Missing or empty fields",
+    });
+    return;
+  }
+
+  const {
+    departureCoordsLat,
+    departureCoordsLong,
+    arrivalCoordsLat,
+    arrivalCoordsLong,
+    maxDate,
+    maxDist,
+  } = req.body;
+  // cherche seulement les trips pas finis
+  Trip.find({ isDone: false }).then((tripsFound) => {
+    let tripsFoundResult = [];
+    let sortedResult = [];
+    for (let tripFound of tripsFound) {
+      let dist = getDistFromCoords(
+        tripFound.arrivalCoords.latitude,
+        tripFound.arrivalCoords.longitude,
+        arrivalCoordsLat,
+        arrivalCoordsLong
+      );
+
+      let maxDateFormatted = moment(maxDate, "DD/MM/YYYY HH:mm").toDate(); // local date
+      // expects: "20/01/2020 09:15" (local)
+
+      if (dist <= maxDist && tripFound.date <= maxDateFormatted) {
+        // push seulement les trips inférieurs ou égaux à la maxDist ET avant la date/heure max (paramétrés par l'utilisateur)
+        tripsFoundResult.push({
+          tripFoundToken: tripFound.token,
+          date: tripFound.date,
+          passengers: tripFound.passengers,
+          passengersNumber: tripFound.passengers.length,
+          capacity: tripFound.capacity,
+          arrivalCoords: tripFound.arrivalCoords,
+          distToDestination: dist,
+        });
+      }
+    }
+
+    // 0 trip a été trouvé avec ces critères
+    if (tripsFoundResult.length === 0) {
+      res.json({
+        result: false,
+        error: "could not find any trip, please revise your search parameters",
+      });
+      return;
+    }
+
+    // trie les résultats du plus proche au plus loin de la destination
+    sortedResult = tripsFoundResult.sort(
+      (a, b) => a.distToDestination - b.distToDestination
+    );
+
+    res.json({
+      result: true,
+      sortedResult,
+    });
+  });
 });
 
 module.exports = router;

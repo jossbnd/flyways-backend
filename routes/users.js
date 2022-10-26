@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const uid2 = require("uid2");
 const bcrypt = require("bcrypt");
-const moment = require('moment');
+const moment = require("moment");
 const User = require("../models/user");
 
 // liste des routes:
@@ -96,18 +96,16 @@ router.post("/signup", (req, res) => {
     // les champs sont remplis, l'email n'est pas pris, et le password est valide: enregistre le nouvel utilisateur
     const hash = bcrypt.hashSync(password, 10);
     const token = uid2(32);
-    // transforme la date (string) en date JS
-    // const dobFormatted = new Date(`${dob.slice(6)}/${dob.slice(3, 5)}/${dob.slice(0, 2)}`)
-    // const dobFormattedUTC = moment(dobFormatted).utc().format();
-    // console.log(dobFormatted);
-    // console.log(dobFormattedUTC);
 
-    var dt = moment(`${dob.slice(6)}-${dob.slice(3, 5)}-${dob.slice(0, 2)}`, "YYYY-MM-DD").toDate();
+    // transforme la date (string) en date JS
+    const dobLocal = moment(dob, "DD/MM/YYYY").toDate();  // local date
+    const t = dobLocal.getTimezoneOffset(); // calcule la différence entre UTC et local
+    const dobMidnightUtc = new Date(dobLocal.getTime() - t * 60000); // stocke la date de naissance en UTC minuit
 
     const newUser = new User({
       firstName,
       lastName,
-      dob: dt,
+      dob: dobMidnightUtc,
       email: emailFormatted,
       password: hash,
       token,
@@ -188,8 +186,8 @@ router.post("/signin", (req, res) => {
 });
 
 // cherche les infos utilisateur du profil
-router.get("/info", (req, res) => {
-  const { token } = req.body;
+router.get("/info/:token", (req, res) => {
+  const { token } = req.params;
 
   if (!token) {
     // s'il manque le token, stop (ne devrait pas arriver sous des conditions normales car géré par le frontend)
@@ -200,7 +198,11 @@ router.get("/info", (req, res) => {
     return;
   }
 
-  User.findOne({ token }).then((userData) => {
+  User.findOne({ token })
+  .populate("trips")
+  .populate("reviews")
+  .then((userData) => {
+    console.log(userData)
     res.json({
       result: true,
       user: {
@@ -211,10 +213,10 @@ router.get("/info", (req, res) => {
         profilePicture: userData.profilePicture,
         trips: userData.trips,
         averageRating: userData.averageRating,
+        reviews: userData.reviews,
       },
-    })
-  }
-  );
+    });
+  });
 });
 
 // mettre à jour une donnée d'utilisateur simple (photo de profil, date de naissance, etc)
