@@ -26,6 +26,7 @@ const airportInfoSchema = mongoose.Schema({
 const coordSchema = mongoose.Schema({
   latitude: Number,
   longitude: Number,
+  description: String,
 })
 
 const tripSchema = mongoose.Schema({
