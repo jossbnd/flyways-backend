@@ -98,7 +98,7 @@ router.post("/signup", (req, res) => {
     const token = uid2(32);
 
     // transforme la date (string) en date JS
-    const dobLocal = moment(dob, "DD/MM/YYYY").toDate();  // local date
+    const dobLocal = moment(dob, "DD/MM/YYYY").toDate(); // local date
     const t = dobLocal.getTimezoneOffset(); // calcule la différence entre UTC et local
     const dobMidnightUtc = new Date(dobLocal.getTime() - t * 60000); // stocke la date de naissance en UTC minuit
 
@@ -199,24 +199,24 @@ router.get("/info/:token", (req, res) => {
   }
 
   User.findOne({ token })
-  .populate("trips")
-  .populate("reviews")
-  .then((userData) => {
-    console.log(userData)
-    res.json({
-      result: true,
-      user: {
-        gender: userData.gender,
-        dob: userData.dob,
-        languagesSpoken: userData.languagesSpoken,
-        nationality: userData.nationality,
-        profilePicture: userData.profilePicture,
-        trips: userData.trips,
-        averageRating: userData.averageRating,
-        reviews: userData.reviews,
-      },
+    .populate("trips")
+    .populate("reviews")
+    .then((userData) => {
+      console.log(userData);
+      res.json({
+        result: true,
+        user: {
+          gender: userData.gender,
+          dob: userData.dob,
+          languagesSpoken: userData.languagesSpoken,
+          nationality: userData.nationality,
+          profilePicture: userData.profilePicture,
+          trips: userData.trips,
+          averageRating: userData.averageRating,
+          reviews: userData.reviews,
+        },
+      });
     });
-  });
 });
 
 // mettre à jour une donnée d'utilisateur simple (photo de profil, date de naissance, etc)
