@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const moment = require("moment");
 const Trip = require("../models/trip");
 const uid2 = require("uid2");
 
@@ -209,9 +210,13 @@ router.put("/search", (req, res) => {
         arrivalCoordsLat,
         arrivalCoordsLong
       );
-      if (dist <= maxDist && tripFound.date <= maxDate) {
-        // push seulement les trips inférieurs ou égaux à la maxDist (paramétrée par l'utilisateur)
-        console.log(tripFound.date)
+
+      let maxDateFormatted = moment(maxDate, "DD/MM/YYYY HH:mm").toDate(); // local date
+
+      // if (dist <= maxDist && tripFound.date <= maxDate) {
+
+      if (dist <= maxDist && tripFound.date <= maxDateFormatted) {
+        // push seulement les trips inférieurs ou égaux à la maxDist ET avant la date/heure max (paramétrés par l'utilisateur)
         tripsFoundResult.push({
           tripFoundToken: tripFound.token,
           date: tripFound.date,

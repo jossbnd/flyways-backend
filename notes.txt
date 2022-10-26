@@ -6,6 +6,7 @@ add/remove language route
 crypt credit card information
 create user trip (for trip history) route
 hide backend IP address before deploying
+GET user info: populate reviews
 
 search trip route:
 -date and time
