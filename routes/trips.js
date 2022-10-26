@@ -69,7 +69,7 @@ router.post("/create", (req, res) => {
       longitude: departureCoordsLong,
     },
     arrivalCoords: { latitude: arrivalCoordsLat, longitude: arrivalCoordsLong },
-    date: new Date(),
+    date,
     capacity,
     isFull: false,
     isDone: false,
@@ -174,11 +174,12 @@ router.put("/search", (req, res) => {
   // output the non-full trips closest to your destination
   if (
     !checkFieldsRequest(req.body, [
-      "date",
       "departureCoordsLat",
       "departureCoordsLong",
       "arrivalCoordsLat",
       "arrivalCoordsLong",
+      "maxDate",
+      "maxDist",
     ])
   ) {
     res.json({
@@ -189,22 +190,58 @@ router.put("/search", (req, res) => {
     return;
   }
 
-  const { departureCoordsLat, departureCoordsLong, arrivalCoordsLat, arrivalCoordsLong } = req.body;
-  // trouve les trips pas finis
-  // push trips into array then sort them depending on distance
+  const {
+    departureCoordsLat,
+    departureCoordsLong,
+    arrivalCoordsLat,
+    arrivalCoordsLong,
+    maxDate,
+    maxDist,
+  } = req.body;
+  // cherche seulement les trips pas finis
   Trip.find({ isDone: false }).then((tripsFound) => {
-    let tripsFoundArray = [];
-    res.json({ tripsFound });
+    let tripsFoundResult = [];
+    let sortedResult = [];
     for (let tripFound of tripsFound) {
-      let dist = getDistFromCoords(tripFound.arrivalCoords.latitude, tripFound.arrivalCoords.longitude, arrivalCoordsLat, arrivalCoordsLong);
-      tripsFoundArray.push(
-        {tripFoundToken: tripFound.token, distToDestination: dist}
+      let dist = getDistFromCoords(
+        tripFound.arrivalCoords.latitude,
+        tripFound.arrivalCoords.longitude,
+        arrivalCoordsLat,
+        arrivalCoordsLong
       );
+      if (dist <= maxDist && tripFound.date <= maxDate) {
+        // push seulement les trips inférieurs ou égaux à la maxDist (paramétrée par l'utilisateur)
+        console.log(tripFound.date)
+        tripsFoundResult.push({
+          tripFoundToken: tripFound.token,
+          date: tripFound.date,
+          passengers: tripFound.passengers,
+          passengersNumber: tripFound.passengers.length,
+          capacity: tripFound.capacity,
+          arrivalCoords: tripFound.arrivalCoords,
+          distToDestination: dist,
+        });
+      }
     }
-    // sort array by disToDestination (lowest to largest)
-    // console.log(tripsFoundArray);
-    tripsFoundArray.sort((a, b) => b.distToDest - a.distToDestination)
-    console.log(tripsFoundArray.sort((a, b) => a.distToDest - b.distToDestination));
+
+    // 0 trip a été trouvé avec ces critères
+    if (tripsFoundResult.length === 0) {
+      res.json({
+        result: false,
+        error: "could not find any trip, please revise your search parameters",
+      });
+      return;
+    }
+
+    // trie les résultats du plus proche au plus loin de la destination
+    sortedResult = tripsFoundResult.sort(
+      (a, b) => a.distToDestination - b.distToDestination
+    );
+
+    res.json({
+      result: true,
+      sortedResult,
+    });
   });
 });
 

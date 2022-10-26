@@ -186,8 +186,8 @@ router.post("/signin", (req, res) => {
 });
 
 // cherche les infos utilisateur du profil
-router.get("/info", (req, res) => {
-  const { token } = req.body;
+router.get("/info/:token", (req, res) => {
+  const { token } = req.params;
 
   if (!token) {
     // s'il manque le token, stop (ne devrait pas arriver sous des conditions normales car géré par le frontend)
@@ -198,7 +198,11 @@ router.get("/info", (req, res) => {
     return;
   }
 
-  User.findOne({ token }).then((userData) => {
+  User.findOne({ token })
+  .populate("trips")
+  .populate("reviews")
+  .then((userData) => {
+    console.log(userData)
     res.json({
       result: true,
       user: {
@@ -209,6 +213,7 @@ router.get("/info", (req, res) => {
         profilePicture: userData.profilePicture,
         trips: userData.trips,
         averageRating: userData.averageRating,
+        reviews: userData.reviews,
       },
     });
   });
