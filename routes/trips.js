@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const moment = require("moment");
 const Trip = require("../models/trip");
+const User = require("../models/user");
 const uid2 = require("uid2");
 
 const {
@@ -65,49 +66,60 @@ router.post("/create", (req, res) => {
 
   const token = uid2(32);
 
-  const newTrip = new Trip({
-    token,
-    passengers: { passengerToken, isLeader: true }, // l'utilisateur qui créée le trip est leader
-    departureCoords: {
-      latitude: departureCoordsLat,
-      longitude: departureCoordsLong,
-    },
-    arrivalCoords: {
-      latitude: arrivalCoordsLat,
-      longitude: arrivalCoordsLong,
-      description: arrivalDescription,
-    },
-    date,
-    capacity,
-    isFull: false,
-    isDone: false,
-  });
-  newTrip.save().then(
-    // enregistre le trip en db, puis renvoie les infos pour le frontend
-    res.json({
-      result: true,
-      trip: {
-        token,
-        // passengers,  FIXME: crashes the backend
-        departureCoordsLat,
-        departureCoordsLong,
-        arrivalCoordsLat,
-        arrivalCoordsLong,
-        arrivalDescription,
-        date,
-        capacity,
+  User.findOne({ token: passengerToken }).then((leader) => {
+    const newTrip = new Trip({
+      token,
+      passengers: {
+        passengerToken,
+        isLeader: true,
+        firstName: leader.firstName,
+        lastName: leader.lastName,
+        rating: leader.rating,
+        languagesSpoken: leader.languagesSpoken,
+      }, // l'utilisateur qui créée le trip est leader
+      departureCoords: {
+        latitude: departureCoordsLat,
+        longitude: departureCoordsLong,
       },
-    })
-  );
+      arrivalCoords: {
+        latitude: arrivalCoordsLat,
+        longitude: arrivalCoordsLong,
+        description: arrivalDescription,
+      },
+      date,
+      capacity,
+      isFull: false,
+      isDone: false,
+    });
+    newTrip.save().then(
+      // enregistre le trip en db, puis renvoie les infos pour le frontend
+      res.json({
+        result: true,
+        trip: {
+          token,
+          // passengers,  FIXME: crashes the backend
+          departureCoordsLat,
+          departureCoordsLong,
+          arrivalCoordsLat,
+          arrivalCoordsLong,
+          arrivalDescription,
+          date,
+          capacity,
+        },
+      })
+    );
+  });
 });
 
 router.put("/addPassenger", (req, res) => {
   const { tripToken, passengerToken } = req.body;
-  const filter = { token: tripToken }; // trouve un trip avec son token
+  // const filter = { token: tripToken }; // trouve un trip avec son token
+  console.log(tripToken)
 
-  Trip.findOne({ filter }).then((trip) => {
+  Trip.findOne({ token: tripToken }).then((trip) => {
     // si le trip est complet, stop
     if (trip.isFull) {
+      console.log(trip)
       res.json({
         result: false,
         error: "trip is full",
@@ -117,12 +129,16 @@ router.put("/addPassenger", (req, res) => {
 
     // si le trip n'est pas complet, ajoute un nouveau passager
     const newPassenger = {
-      passengerToken,
       isLeader: false,
+      passengerToken,
+      firstName: null,
+      lastName: null,
+      rating: null,
+      languagesSpoken: [],
     };
 
     // ajoute un nouveau passager au tableau "passengers"
-    Trip.updateOne({ filter }, { $push: { passengers: newPassenger } }).then(
+    Trip.updateOne({ token: tripToken }, { $push: { passengers: newPassenger } }).then(
       (tripInfo) => {
         if (tripInfo.modifiedCount === 0) {
           // n'a pas pu ajouter un passager au trip (ne devrait pas arriver sous conditions normales)
@@ -139,7 +155,7 @@ router.put("/addPassenger", (req, res) => {
           });
           if (trip.passengers.length + 1 >= trip.capacity) {
             // si le trip + le nouveau passager atteint la capacité max, isFull devient true
-            Trip.updateOne({ filter }, { isFull: true }).then();
+            Trip.updateOne({ token: tripToken }, { isFull: true }).then();
           }
         }
       }
@@ -225,7 +241,11 @@ router.put("/search", (req, res) => {
       let maxDateFormatted = moment(maxDate, "DD/MM/YYYY HH:mm").toDate(); // local date
       // expects: "20/01/2020 09:15" (local)
 
-      if (dist <= maxDist && tripFound.date >= minDateFormatted && tripFound.date <= maxDateFormatted) {
+      if (
+        dist <= maxDist &&
+        tripFound.date >= minDateFormatted &&
+        tripFound.date <= maxDateFormatted
+      ) {
         // push seulement les trips inférieurs ou égaux à la maxDist ET avant la date/heure max (paramétrés par l'utilisateur)
         tripsFoundResult.push({
           tripFoundToken: tripFound.token,
