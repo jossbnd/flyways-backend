@@ -7,7 +7,7 @@ const cors = require("cors");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-const fileUpload = require('express-fileupload');
+const fileUpload = require("express-fileupload");
 
 const indexRouter = require("./routes/index");
 const discussionsRouter = require("./routes/discussions");
@@ -18,8 +18,8 @@ const usersRouter = require("./routes/users");
 const app = express();
 
 // app.use()
-app.use(fileUpload());
 app.use(helmet());
+app.use(fileUpload());
 app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());

@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const moment = require("moment");
 const User = require("../models/user");
 
+const uniqid = require("uniqid");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
 
@@ -276,19 +277,18 @@ router.put("/update/:token", (req, res) => {
 router.put("/update/profilepicture/:token", async (req, res) => {
   const { token } = req.params;
 
-  const photoPath = `./tmp/${uid2(32)}.jpg`;
+  const photoPath = `./tmp/${uniqid()}.jpg`;
   const resultMove = await req.files.photoFromFront.mv(photoPath);
 
   if (!resultMove) {
     const resultCloudinary = await cloudinary.uploader.upload(photoPath);
     fs.unlinkSync(photoPath);
-    User.updateOne({ token }, { profilePicture: resultCloudinary.secure_url }).then(
-      res.json({
-        result: true,
-        msg: "profile picture updated",
-        url: resultCloudinary.secure_url,
-      })
-    );
+    User.updateOne(
+      { token },
+      { profilePicture: resultCloudinary.secure_url }
+    ).then((data) => {
+      res.json({ result: true, url: resultCloudinary.secure_url });
+    });
   } else {
     res.json({ result: false, error: resultMove });
   }
