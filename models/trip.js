@@ -3,6 +3,10 @@ const mongoose = require("mongoose");
 const passengerSchema = mongoose.Schema({
   isLeader: Boolean,
   passengerToken: String,
+  firstName: String || null,
+  lastName: String || null,
+  rating: Number || null,
+  languagesSpoken: Array || null,
 });
 
 const airportInfoSchema = mongoose.Schema({
