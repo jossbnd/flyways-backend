@@ -71,12 +71,13 @@ router.post("/create", (req, res) => {
       token,
       passengers: {
         passengerToken,
-        isLeader: true,
+        isLeader: true, // l'utilisateur qui créée le trip est leader
         firstName: leader.firstName,
         lastName: leader.lastName,
-        rating: leader.rating,
-        languagesSpoken: leader.languagesSpoken,
-      }, // l'utilisateur qui créée le trip est leader
+        profilePicture: leader.profilePicture,
+        rating: leader.averageRating,
+        languagesSpoken: leader.languagesSpoken, // FIXME: creates broken "languagesSpoken" array
+      },
       departureCoords: {
         latitude: departureCoordsLat,
         longitude: departureCoordsLong,
@@ -91,13 +92,20 @@ router.post("/create", (req, res) => {
       isFull: false,
       isDone: false,
     });
+    const leaderData = {
+      firstName: leader.firstName,
+      lastName: leader.lastName,
+      profilePicture: leader.profilePicture,
+      rating: leader.averageRating,
+      languagesSpoken: leader.languagesSpoken,
+    };
     newTrip.save().then(
       // enregistre le trip en db, puis renvoie les infos pour le frontend
       res.json({
         result: true,
         trip: {
           token,
-          // passengers,  FIXME: crashes the backend
+          leaderData,
           departureCoordsLat,
           departureCoordsLong,
           arrivalCoordsLat,
@@ -114,12 +122,11 @@ router.post("/create", (req, res) => {
 router.put("/addPassenger", (req, res) => {
   const { tripToken, passengerToken } = req.body;
   // const filter = { token: tripToken }; // trouve un trip avec son token
-  console.log(tripToken)
 
   Trip.findOne({ token: tripToken }).then((trip) => {
     // si le trip est complet, stop
     if (trip.isFull) {
-      console.log(trip)
+      console.log(trip);
       res.json({
         result: false,
         error: "trip is full",
@@ -138,28 +145,29 @@ router.put("/addPassenger", (req, res) => {
     };
 
     // ajoute un nouveau passager au tableau "passengers"
-    Trip.updateOne({ token: tripToken }, { $push: { passengers: newPassenger } }).then(
-      (tripInfo) => {
-        if (tripInfo.modifiedCount === 0) {
-          // n'a pas pu ajouter un passager au trip (ne devrait pas arriver sous conditions normales)
-          res.json({
-            result: false,
-            error: "could not add passenger to trip",
-            tripInfo,
-          });
-        } else {
-          // a bien ajouté un passager au trip
-          res.json({
-            result: true,
-            tripInfo,
-          });
-          if (trip.passengers.length + 1 >= trip.capacity) {
-            // si le trip + le nouveau passager atteint la capacité max, isFull devient true
-            Trip.updateOne({ token: tripToken }, { isFull: true }).then();
-          }
+    Trip.updateOne(
+      { token: tripToken },
+      { $push: { passengers: newPassenger } }
+    ).then((tripInfo) => {
+      if (tripInfo.modifiedCount === 0) {
+        // n'a pas pu ajouter un passager au trip (ne devrait pas arriver sous conditions normales)
+        res.json({
+          result: false,
+          error: "could not add passenger to trip",
+          tripInfo,
+        });
+      } else {
+        // a bien ajouté un passager au trip
+        res.json({
+          result: true,
+          tripInfo,
+        });
+        if (trip.passengers.length + 1 >= trip.capacity) {
+          // si le trip + le nouveau passager atteint la capacité max, isFull devient true
+          Trip.updateOne({ token: tripToken }, { isFull: true }).then();
         }
       }
-    );
+    });
   });
 });
 

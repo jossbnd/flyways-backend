@@ -5,6 +5,7 @@ const passengerSchema = mongoose.Schema({
   passengerToken: String,
   firstName: String || null,
   lastName: String || null,
+  profilePicture: String || null,
   rating: Number || null,
   languagesSpoken: Array || null,
 });
