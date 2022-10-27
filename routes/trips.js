@@ -187,6 +187,7 @@ router.put("/search", (req, res) => {
       "departureCoordsLong",
       "arrivalCoordsLat",
       "arrivalCoordsLong",
+      "minDate",
       "maxDate",
       "maxDist",
     ])
@@ -204,6 +205,7 @@ router.put("/search", (req, res) => {
     departureCoordsLong,
     arrivalCoordsLat,
     arrivalCoordsLong,
+    minDate,
     maxDate,
     maxDist,
   } = req.body;
@@ -219,10 +221,11 @@ router.put("/search", (req, res) => {
         arrivalCoordsLong
       );
 
+      let minDateFormatted = moment(minDate, "DD/MM/YYYY HH:mm").toDate(); // local date
       let maxDateFormatted = moment(maxDate, "DD/MM/YYYY HH:mm").toDate(); // local date
       // expects: "20/01/2020 09:15" (local)
 
-      if (dist <= maxDist && tripFound.date <= maxDateFormatted) {
+      if (dist <= maxDist && tripFound.date >= minDateFormatted && tripFound.date <= maxDateFormatted) {
         // push seulement les trips inférieurs ou égaux à la maxDist ET avant la date/heure max (paramétrés par l'utilisateur)
         tripsFoundResult.push({
           tripFoundToken: tripFound.token,
