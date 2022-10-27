@@ -277,20 +277,21 @@ router.put("/update/:token", (req, res) => {
 router.put("/update/profilepicture/:token", async (req, res) => {
   const { token } = req.params;
 
-  const photoPath = `./tmp/33.jpg`;
-  const resultMove = await req.files.photoFromFront.mv(photoPath);
-  if (!resultMove) {
-    const resultCloudinary = await cloudinary.uploader.upload(photoPath);
-    fs.unlinkSync(photoPath);
-    User.updateOne(
-      { token },
-      { profilePicture: resultCloudinary.secure_url }
-    ).then((data) => {
-      res.json({ result: true, url: resultCloudinary.secure_url });
-    });
-  } else {
-    res.json({ result: false, error: resultMove });
-  }
+  const photoPath = `./tmp/${uniqid()}.jpg`;
+  res.json({result: photoPath})
+  // const resultMove = await req.files.photoFromFront.mv(photoPath);
+  // if (!resultMove) {
+  //   const resultCloudinary = await cloudinary.uploader.upload(photoPath);
+  //   fs.unlinkSync(photoPath);
+  //   User.updateOne(
+  //     { token },
+  //     { profilePicture: resultCloudinary.secure_url }
+  //   ).then((data) => {
+  //     res.json({ result: true, url: resultCloudinary.secure_url });
+  //   });
+  // } else {
+  //   res.json({ result: false, error: resultMove });
+  // }
 });
 
 router.put("/verify/:token", (req, res) => {
