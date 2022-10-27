@@ -5,12 +5,16 @@ const bcrypt = require("bcrypt");
 const moment = require("moment");
 const User = require("../models/user");
 
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs");
+
 // liste des routes:
 // GET /all: montre tous les utilisateurs
 // POST /signup: enregistrer un nouvel utilisateur
 // POST /signin: se connecter
 // GET /info: cherche les infos utilisateur pour le profil
 // PUT /update: mettre à jour une donnée simple utilisateur
+// PUT /update/profilepicture/: mettre à jour une donnée simple utilisateur
 // PUT /verify: vérifie un utilisateur
 // PUT /updatePaymentMethod: met à jour le moyen de paiement
 // DELETE /delete: supprime un utilisateur
@@ -199,25 +203,24 @@ router.get("/info/:token", (req, res) => {
   }
 
   User.findOne({ token })
-  .populate("trips")
-  .populate("reviews")
-  .then((userData) => {
-    res.json({
-      result: true,
-      user: {
-        gender: userData.gender,
-        dob: userData.dob,
-        languagesSpoken: userData.languagesSpoken,
-        nationality: userData.nationality,
-        profilePicture: userData.profilePicture,
-        trips: userData.trips,
-        averageRating: userData.averageRating,
-        reviews: userData.reviews,
-      },
+    .populate("trips")
+    .populate("reviews")
+    .then((userData) => {
+      res.json({
+        result: true,
+        user: {
+          gender: userData.gender,
+          dob: userData.dob,
+          languagesSpoken: userData.languagesSpoken,
+          nationality: userData.nationality,
+          profilePicture: userData.profilePicture,
+          trips: userData.trips,
+          averageRating: userData.averageRating,
+          reviews: userData.reviews,
+        },
+      });
     });
-  });
 });
-
 
 // mettre à jour une donnée d'utilisateur simple (photo de profil, date de naissance, etc)
 router.put("/update/:token", (req, res) => {
@@ -266,6 +269,28 @@ router.put("/update/:token", (req, res) => {
       result: false,
       error: "no data to update",
     });
+  }
+});
+
+// update Profile Picture
+router.put("/update/profilepicture/:token", async (req, res) => {
+  const { token } = req.params;
+
+  const photoPath = `./tmp/${uid2(32)}.jpg`;
+  const resultMove = await req.files.photoFromFront.mv(photoPath);
+
+  if (!resultMove) {
+    const resultCloudinary = await cloudinary.uploader.upload(photoPath);
+    fs.unlinkSync(photoPath);
+    User.updateOne({ token }, { profilePicture: resultCloudinary.secure_url }).then(
+      res.json({
+        result: true,
+        msg: "profile picture updated",
+        url: resultCloudinary.secure_url,
+      })
+    );
+  } else {
+    res.json({ result: false, error: resultMove });
   }
 });
 
@@ -341,7 +366,7 @@ router.delete("/delete/:token", (req, res) => {
     return;
   }
 
-  const { token } = req.params
+  const { token } = req.params;
 
   User.deleteOne({
     token,
