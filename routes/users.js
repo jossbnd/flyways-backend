@@ -199,38 +199,30 @@ router.get("/info/:token", (req, res) => {
   }
 
   User.findOne({ token })
-    .populate("trips")
-    .populate("reviews")
-    .then((userData) => {
-      console.log(userData);
-      res.json({
-        result: true,
-        user: {
-          gender: userData.gender,
-          dob: userData.dob,
-          languagesSpoken: userData.languagesSpoken,
-          nationality: userData.nationality,
-          profilePicture: userData.profilePicture,
-          trips: userData.trips,
-          averageRating: userData.averageRating,
-          reviews: userData.reviews,
-        },
-      });
+  .populate("trips")
+  .populate("reviews")
+  .then((userData) => {
+    res.json({
+      result: true,
+      user: {
+        gender: userData.gender,
+        dob: userData.dob,
+        languagesSpoken: userData.languagesSpoken,
+        nationality: userData.nationality,
+        profilePicture: userData.profilePicture,
+        trips: userData.trips,
+        averageRating: userData.averageRating,
+        reviews: userData.reviews,
+      },
     });
+  });
 });
 
-// mettre à jour une donnée d'utilisateur simple (photo de profil, date de naissance, etc)
-router.put("/update", (req, res) => {
-  const { token, phone, gender, dob, nationality, profilePicture } = req.body;
 
-  if (!token) {
-    // s'il manque le token, stop (ne devrait pas arriver sous des conditions normales car géré par le frontend)
-    res.json({
-      result: false,
-      error: "no user token",
-    });
-    return;
-  }
+// mettre à jour une donnée d'utilisateur simple (photo de profil, date de naissance, etc)
+router.put("/update/:token", (req, res) => {
+  const { phone, gender, dob, nationality, profilePicture } = req.body;
+  const { token } = req.params;
 
   // met à jour une donnée simple en fonction de ce qu'il y a dans la requête
   if (phone) {
@@ -277,17 +269,8 @@ router.put("/update", (req, res) => {
   }
 });
 
-router.put("/verify", (req, res) => {
-  const { token } = req.body;
-
-  // s'il manque le user token, stop
-  if (!token) {
-    res.json({
-      result: false,
-      error: "no user token",
-    });
-    return;
-  }
+router.put("/verify/:token", (req, res) => {
+  const { token } = req.params;
 
   User.updateOne({ token }, { isVerified: true }).then(
     res.json({
@@ -300,10 +283,9 @@ router.put("/verify", (req, res) => {
 // create add/remove language route
 
 // ajouter une carte de paiement
-router.put("/updatePaymentMethod", (req, res) => {
+router.put("/updatePaymentMethod/:token", (req, res) => {
   if (
     !checkFieldsRequest(req.body, [
-      "token",
       "cardType",
       "firstName",
       "lastName",
@@ -319,7 +301,8 @@ router.put("/updatePaymentMethod", (req, res) => {
     return;
   }
 
-  const { token, cardType, firstName, lastName, cardNumber, cvv } = req.body;
+  const { cardType, firstName, lastName, cardNumber, cvv } = req.body;
+  const { token } = req.params;
 
   const newPaymentMethod = {
     cardType,
@@ -348,7 +331,7 @@ router.put("/updatePaymentMethod", (req, res) => {
 });
 
 // supprimer un utilisateur
-router.delete("/delete", (req, res) => {
+router.delete("/delete/:token", (req, res) => {
   if (!checkFieldsRequest(req.body, ["email"])) {
     res.json({
       // si un des champs est vide, stop
@@ -358,8 +341,10 @@ router.delete("/delete", (req, res) => {
     return;
   }
 
+  const { token } = req.params
+
   User.deleteOne({
-    token: req.body.token,
+    token,
   }).then((deletedUser) => {
     if (deletedUser.deletedCount > 0) {
       res.json({

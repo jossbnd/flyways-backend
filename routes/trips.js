@@ -39,6 +39,7 @@ router.post("/create", (req, res) => {
       "departureCoordsLong",
       "arrivalCoordsLat",
       "arrivalCoordsLong",
+      "arrivalDescription",
       "date",
       "capacity",
     ])
@@ -57,6 +58,7 @@ router.post("/create", (req, res) => {
     departureCoordsLong,
     arrivalCoordsLat,
     arrivalCoordsLong,
+    arrivalDescription,
     date,
     capacity,
   } = req.body;
@@ -70,7 +72,11 @@ router.post("/create", (req, res) => {
       latitude: departureCoordsLat,
       longitude: departureCoordsLong,
     },
-    arrivalCoords: { latitude: arrivalCoordsLat, longitude: arrivalCoordsLong },
+    arrivalCoords: {
+      latitude: arrivalCoordsLat,
+      longitude: arrivalCoordsLong,
+      description: arrivalDescription,
+    },
     date,
     capacity,
     isFull: false,
@@ -87,6 +93,7 @@ router.post("/create", (req, res) => {
         departureCoordsLong,
         arrivalCoordsLat,
         arrivalCoordsLong,
+        arrivalDescription,
         date,
         capacity,
       },
