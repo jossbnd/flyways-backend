@@ -7,7 +7,7 @@ const passengerSchema = mongoose.Schema({
   lastName: String || null,
   profilePicture: String || null,
   rating: Number || null,
-  languagesSpoken: Array || null,
+  languagesSpoken: [String] || null,
 });
 
 const airportInfoSchema = mongoose.Schema({

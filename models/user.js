@@ -1,10 +1,5 @@
 const mongoose = require("mongoose");
 
-// subdocument models
-const languageSpokenSchema = mongoose.Schema({
-  language: String,
-});
-
 const bankInfoSchema = mongoose.Schema({
   cardType: String,
   firstName: String,
@@ -43,7 +38,7 @@ const userSchema = mongoose.Schema({
   isVerified: Boolean,
   gender: String || null,
   dob: Date, // date of birth
-  languagesSpoken: [languageSpokenSchema || null],
+  languagesSpoken: [String || null],
   nationality: String || null,
   profilePicture: String || null, // url
   trips: [{ type: mongoose.Schema.Types.ObjectId, ref: "trips" } || null],
