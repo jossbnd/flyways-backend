@@ -66,15 +66,6 @@ router.post("/signup", (req, res) => {
   const { firstName, lastName, password, email, dob } = req.body;
   const emailFormatted = email.toLowerCase(); // met email en minuscule pour les checks
 
-  // TODO: check typeof dob, only accept date
-  // if (typeof dob !== "date") {
-  //   res.json({
-  //     result: false,
-  //     msg: "date invalid (wrong format)",
-  //   });
-  //   return;
-  // }
-
   // check si l'email est pris
   User.findOne({
     email: emailFormatted,
@@ -116,9 +107,8 @@ router.post("/signup", (req, res) => {
       token,
 
       // null par défault: pourront être renseignés par l'utilisateur plus tard
-      // phone: { number: null, isVerified: false },
       phone: null,
-      isVerified: null,
+      isVerified: false,
       languagesSpoken: [],
       gender: null,
       nationality: null,
