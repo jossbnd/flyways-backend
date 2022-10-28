@@ -38,6 +38,7 @@ router.post("/create", (req, res) => {
       "passengerToken",
       "departureCoordsLat",
       "departureCoordsLong",
+      "departureDescription",
       "arrivalCoordsLat",
       "arrivalCoordsLong",
       "arrivalDescription",
@@ -57,6 +58,7 @@ router.post("/create", (req, res) => {
     passengerToken,
     departureCoordsLat,
     departureCoordsLong,
+    departureDescription,
     arrivalCoordsLat,
     arrivalCoordsLong,
     arrivalDescription,
@@ -81,6 +83,7 @@ router.post("/create", (req, res) => {
       departureCoords: {
         latitude: departureCoordsLat,
         longitude: departureCoordsLong,
+        description: departureDescription,
       },
       arrivalCoords: {
         latitude: arrivalCoordsLat,
