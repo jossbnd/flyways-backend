@@ -234,7 +234,12 @@ router.put("/update/:token", (req, res) => {
       })
     );
   } else if (dob) {
-    User.updateOne({ token }, { dob }).then(
+    // transforme la date (string) en date JS
+    const dobLocal = moment(dob, "DD/MM/YYYY").toDate(); // local date
+    const t = dobLocal.getTimezoneOffset(); // calcule la différence entre UTC et local
+    const dobMidnightUtc = new Date(dobLocal.getTime() - t * 60000); // stocke la date de naissance en UTC minuit
+
+    User.updateOne({ token }, { dob: dobMidnightUtc }).then(
       res.json({
         result: true,
         msg: "user dob updated",
