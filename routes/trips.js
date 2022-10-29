@@ -273,6 +273,7 @@ router.put("/search", (req, res) => {
           passengersNumber: tripFound.passengers.length,
           capacity: tripFound.capacity,
           arrivalCoords: tripFound.arrivalCoords,
+          departureCoords: tripFound.departureCoords,
           distToDestination: dist,
         });
       }
