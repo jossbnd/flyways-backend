@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const ObjectID = require("mongoDB").ObjectID;
 const moment = require("moment");
 const Trip = require("../models/trip");
 const User = require("../models/user");
@@ -100,13 +101,20 @@ router.post("/create", (req, res) => {
       lastName: leader.lastName,
       profilePicture: leader.profilePicture,
       rating: leader.averageRating,
-      // languagesSpoken: leader.languagesSpoken,
     };
+
+    // push le trip dans le tableau trips de l'utilisateur
+    User.updateOne(
+      { token: passengerToken },
+      { $push: { trips: newTrip._id } }
+    ).then();
+
     newTrip.save().then(
       // enregistre le trip en db, puis renvoie les infos pour le frontend
       res.json({
         result: true,
         trip: {
+          newTripId: newTrip._id,
           token,
           leaderData,
           departureCoordsLat,
@@ -123,10 +131,9 @@ router.post("/create", (req, res) => {
 });
 
 router.put("/addPassenger", (req, res) => {
-  const { tripToken, passengerToken } = req.body;
-  // const filter = { token: tripToken }; // trouve un trip avec son token
+  const { tripId, passengerToken } = req.body;
 
-  Trip.findOne({ token: tripToken }).then((trip) => {
+  Trip.findOne({ _id: tripId }).then((trip) => {
     // si le trip est complet, stop
     if (trip.isFull) {
       console.log(trip);
@@ -139,9 +146,12 @@ router.put("/addPassenger", (req, res) => {
 
     // si le trip n'est pas complet, ajoute un nouveau passager
     // add user.find here
-    User.findOne({ token: passengerToken }).then((user) => {
+    User.findOneAndUpdate(
+      { token: passengerToken }, // trouve un utilisateur avec son token
+      { $push: { trips: tripId } } // push le trip dans son tableau
+    ).then((user) => {
       console.log(user);
-      
+
       const newPassenger = {
         isLeader: false,
         passengerToken,
@@ -150,12 +160,11 @@ router.put("/addPassenger", (req, res) => {
         profilePicture: user.profilePicture,
         rating: user.averageRating,
         languagesSpoken: user.languagesSpoken,
-        // $push: { languagesSpoken: user.languagesSpoken[0] },
       };
-  
+
       // ajoute un nouveau passager au tableau "passengers"
       Trip.updateOne(
-        { token: tripToken },
+        { _id: tripId },
         { $push: { passengers: newPassenger } }
       ).then((tripInfo) => {
         if (tripInfo.modifiedCount === 0) {
@@ -178,8 +187,7 @@ router.put("/addPassenger", (req, res) => {
         }
       });
     });
-
-    });
+  });
 });
 
 // supprimer un passager d'un trip
@@ -223,7 +231,7 @@ router.put("/search", (req, res) => {
       "arrivalCoordsLat",
       "arrivalCoordsLong",
       "minDate",
-      "maxDate",
+      "rangeTime",
       "maxDist",
     ])
   ) {
@@ -241,8 +249,8 @@ router.put("/search", (req, res) => {
     arrivalCoordsLat,
     arrivalCoordsLong,
     minDate,
-    maxDate,
     maxDist,
+    rangeTime,
   } = req.body;
   // cherche seulement les trips pas finis
   Trip.find({ isDone: false }).then((tripsFound) => {
@@ -257,7 +265,11 @@ router.put("/search", (req, res) => {
       );
 
       let minDateFormatted = moment(minDate, "DD/MM/YYYY HH:mm").toDate(); // local date
-      let maxDateFormatted = moment(maxDate, "DD/MM/YYYY HH:mm").toDate(); // local date
+      // let maxDateFormatted = moment(maxDate, "DD/MM/YYYY HH:mm").toDate(); // local date
+
+      let maxDateFormatted = moment(minDateFormatted).add(rangeTime, "m").toDate();
+      console.log(maxDateFormatted);
+
       // expects: "20/01/2020 09:15" (local)
 
       if (
