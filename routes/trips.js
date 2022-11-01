@@ -194,7 +194,7 @@ router.put("/addPassenger", (req, res) => {
           });
           if (trip.passengers.length + 1 >= trip.capacity) {
             // si le trip + le nouveau passager atteint la capacité max, isFull devient true
-            Trip.updateOne({ token: tripToken }, { isFull: true }).then();
+            Trip.updateOne({ _id: tripId }, { isFull: true }).then();
           }
         }
       });
@@ -265,7 +265,7 @@ router.put("/search", (req, res) => {
     rangeTime,
   } = req.body;
   // cherche seulement les trips pas finis
-  Trip.find({ isDone: false }).then((tripsFound) => {
+  Trip.find({ isFull: false }).then((tripsFound) => {
     let tripsFoundResult = [];
     let sortedResult = [];
     for (let tripFound of tripsFound) {
@@ -277,7 +277,6 @@ router.put("/search", (req, res) => {
       );
 
       let minDateFormatted = moment(minDate, "DD/MM/YYYY HH:mm").toDate(); // local date
-      // let maxDateFormatted = moment(maxDate, "DD/MM/YYYY HH:mm").toDate(); // local date
 
       let maxDateFormatted = moment(minDateFormatted)
         .add(rangeTime, "m")
@@ -293,6 +292,7 @@ router.put("/search", (req, res) => {
       ) {
         // push seulement les trips inférieurs ou égaux à la maxDist ET avant la date/heure max (paramétrés par l'utilisateur)
         tripsFoundResult.push({
+          tripId: tripFound._id,
           tripFoundToken: tripFound.token,
           date: tripFound.date,
           passengers: tripFound.passengers,

@@ -20,7 +20,7 @@ const coordSchema = mongoose.Schema({
   latitude: Number,
   longitude: Number,
   description: String,
-})
+});
 
 const messageSchema = mongoose.Schema({
   userToken: String, 
