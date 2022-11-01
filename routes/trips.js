@@ -265,7 +265,7 @@ router.put("/search", (req, res) => {
     rangeTime,
   } = req.body;
   // cherche seulement les trips pas finis
-  Trip.find({ isDone: false }).then((tripsFound) => {
+  Trip.find({ isFull: false }).then((tripsFound) => {
     let tripsFoundResult = [];
     let sortedResult = [];
     for (let tripFound of tripsFound) {
