@@ -327,12 +327,12 @@ router.put("/search", (req, res) => {
 });
 
 // Post a message on the trip discussions
-router.post("/postmessage/:token", (req, res) => {
+router.post("/postmessage/:token", async (req, res) => {
   const message = req.body;
   const { token } = req.params;
 
   // Envoi du message sur Pusher
-  pusher.trigger(token, "message", message);
+  await pusher.trigger(token, "message", message);
 
   Trip.updateOne({ token }, { $push: { messages: message } }).then((data) => {
     if (data.modifiedCount) {
