@@ -326,16 +326,16 @@ router.put("/search", (req, res) => {
   });
 });
 
-// post a message on the trip discussions
+// Post a message on the trip discussions
 router.post("/postmessage/:token", (req, res) => {
   const message = req.body;
   const { token } = req.params;
 
+  // Envoi du message sur Pusher
   pusher.trigger(token, "message", message);
 
   Trip.updateOne({ token }, { $push: { messages: message } }).then((data) => {
     if (data.modifiedCount) {
-      console.log(data);
       res.json({ result: true, msg: "new message posted on trip discussion" });
     } else {
       res.json({ result: false, error: "error - message not posted" });
@@ -343,7 +343,7 @@ router.post("/postmessage/:token", (req, res) => {
   });
 });
 
-// Join chat
+// Join chat Pusher
 router.put("/joinchat/:token", (req, res) => {
   const { token } = req.params;
   const { firstName, lastName } = req.body;
@@ -356,7 +356,7 @@ router.put("/joinchat/:token", (req, res) => {
   res.json({ result: true });
 });
 
-// Leave chat
+// Leave chat Pusher
 router.delete("/leavechat/:token", (req, res) => {
   const { token } = req.params;
   const { firstName, lastName } = req.body;
