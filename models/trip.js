@@ -32,7 +32,7 @@ const coordSchema = mongoose.Schema({
   latitude: Number,
   longitude: Number,
   description: String,
-})
+});
 
 const tripSchema = mongoose.Schema({
   token: String,
