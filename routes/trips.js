@@ -94,6 +94,7 @@ router.post("/create", (req, res) => {
       capacity,
       isFull: false,
       isDone: false,
+      messages: [],
     });
     const leaderData = {
       firstName: leader.firstName,
@@ -123,6 +124,7 @@ router.post("/create", (req, res) => {
           arrivalDescription,
           date,
           capacity,
+          messages: [],
         },
       })
     );
@@ -266,7 +268,9 @@ router.put("/search", (req, res) => {
       let minDateFormatted = moment(minDate, "DD/MM/YYYY HH:mm").toDate(); // local date
       // let maxDateFormatted = moment(maxDate, "DD/MM/YYYY HH:mm").toDate(); // local date
 
-      let maxDateFormatted = moment(minDateFormatted).add(rangeTime, "m").toDate();
+      let maxDateFormatted = moment(minDateFormatted)
+        .add(rangeTime, "m")
+        .toDate();
       console.log(maxDateFormatted);
 
       // expects: "20/01/2020 09:15" (local)
@@ -309,6 +313,23 @@ router.put("/search", (req, res) => {
       sortedResult,
     });
   });
+});
+
+// post a message on the trip discussions
+router.post("/postmessage/:token", (req, res) => {
+  const message = req.body;
+  const { token } = req.params;
+
+  Trip.updateOne({ token }, { $push: { messages: message }}).then(data => {
+
+    if (data.modifiedCount) {
+      console.log(data);
+      res.json({ result: true, msg: 'new message posted on trip discussion'})
+    } else {
+      res.json({ result: false, error: 'error - message not posted'})
+    }
+  })
+
 });
 
 module.exports = router;
