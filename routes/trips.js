@@ -194,7 +194,7 @@ router.put("/addPassenger", (req, res) => {
           });
           if (trip.passengers.length + 1 >= trip.capacity) {
             // si le trip + le nouveau passager atteint la capacité max, isFull devient true
-            Trip.updateOne({ token: tripToken }, { isFull: true }).then();
+            Trip.updateOne({ _id: tripId }, { isFull: true }).then();
           }
         }
       });
