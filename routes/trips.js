@@ -11,6 +11,16 @@ const {
 } = require("../modules/checkFieldsRequire");
 const { getDistFromCoords } = require("../modules/getDistance");
 
+// Initialisation de Pusher
+const Pusher = require("pusher");
+const pusher = new Pusher({
+  appId: process.env.PUSHER_APPID,
+  key: process.env.PUSHER_KEY,
+  secret: process.env.PUSHER_SECRET,
+  cluster: process.env.PUSHER_CLUSTER,
+  useTLS: true,
+});
+
 // liste des routes:
 // GET /all: montre tous les trips
 // POST /create: créée un nouveau trip
@@ -18,6 +28,7 @@ const { getDistFromCoords } = require("../modules/getDistance");
 // PUT /removePassenger: supprime un passager d'un trip
 // DELETE /removeTrip: supprime un trip
 // PUT /search: chercher des trips
+// POST /postmessage: nouveau message dans le chat du trip
 
 router.get("/", (req, res) => {
   res.send("flyways trips index");
@@ -320,16 +331,42 @@ router.post("/postmessage/:token", (req, res) => {
   const message = req.body;
   const { token } = req.params;
 
-  Trip.updateOne({ token }, { $push: { messages: message }}).then(data => {
+  pusher.trigger(token, "message", message);
 
+  Trip.updateOne({ token }, { $push: { messages: message } }).then((data) => {
     if (data.modifiedCount) {
       console.log(data);
-      res.json({ result: true, msg: 'new message posted on trip discussion'})
+      res.json({ result: true, msg: "new message posted on trip discussion" });
     } else {
-      res.json({ result: false, error: 'error - message not posted'})
+      res.json({ result: false, error: "error - message not posted" });
     }
-  })
+  });
+});
 
+// Join chat
+router.put("/joinchat/:token", (req, res) => {
+  const { token } = req.params;
+  const { firstName, lastName } = req.body;
+
+  pusher.trigger(token, "join", {
+    firstName,
+    lastName,
+  });
+
+  res.json({ result: true });
+});
+
+// Leave chat
+router.delete("/leavechat/:token", (req, res) => {
+  const { token } = req.params;
+  const { firstName, lastName } = req.body;
+
+  pusher.trigger(token, "leave", {
+    firstName,
+    lastName,
+  });
+
+  res.json({ result: true });
 });
 
 module.exports = router;
