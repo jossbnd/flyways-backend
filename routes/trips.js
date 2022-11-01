@@ -277,7 +277,6 @@ router.put("/search", (req, res) => {
       );
 
       let minDateFormatted = moment(minDate, "DD/MM/YYYY HH:mm").toDate(); // local date
-      // let maxDateFormatted = moment(maxDate, "DD/MM/YYYY HH:mm").toDate(); // local date
 
       let maxDateFormatted = moment(minDateFormatted)
         .add(rangeTime, "m")
@@ -293,6 +292,7 @@ router.put("/search", (req, res) => {
       ) {
         // push seulement les trips inférieurs ou égaux à la maxDist ET avant la date/heure max (paramétrés par l'utilisateur)
         tripsFoundResult.push({
+          tripId: tripFound._id,
           tripFoundToken: tripFound.token,
           date: tripFound.date,
           passengers: tripFound.passengers,
