@@ -28,6 +28,7 @@ const pusher = new Pusher({
 // PUT /removePassenger: supprime un passager d'un trip
 // DELETE /removeTrip: supprime un trip
 // PUT /search: chercher des trips
+// PUT /endTrip: met fin au trip
 // POST /postmessage: nouveau message dans le chat du trip
 // PUT /joinchat: rejoindre une room de chat Pusher
 // PUT /leave: quitter une room de chat Pusher
@@ -83,7 +84,6 @@ router.post("/create", (req, res) => {
 
   User.findOne({ token: passengerToken }).then((leader) => {
     // let tripDate = moment(date).toDate(); // local date
-
 
     const newTrip = new Trip({
       token,
@@ -326,6 +326,17 @@ router.put("/search", (req, res) => {
       sortedResult,
     });
   });
+});
+
+router.put("/endTrip", (req, res) => {
+  const { tripId } = req.body;
+
+  Trip.updateOne({ _id: tripId }, { isDone: true }).then(
+    res.json({
+      result: true,
+      msg: "trip ended",
+    })
+  );
 });
 
 // Post a message on the trip discussions
