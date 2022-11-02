@@ -200,6 +200,8 @@ router.get("/info/:token", (req, res) => {
       res.json({
         result: true,
         user: {
+          firstName: userData.firstName,
+          lastName: userData.lastName,
           gender: userData.gender,
           dob: userData.dob,
           languagesSpoken: userData.languagesSpoken,
@@ -279,7 +281,73 @@ router.put("/verify/:token", (req, res) => {
   );
 });
 
-// create add/remove language route
+// get user languages
+router.get("/languages/:token", (req, res) => {
+  const { token } = req.params;
+
+  User.findOne({
+    token,
+  }).then((findUser) => {
+    if (!findUser) {
+      res.json({
+        result: false,
+        error: "could not find user",
+      });
+    } else {
+      res.json({
+        result: true,
+        languagesSpoken: findUser.languagesSpoken,
+      });
+    }
+  });
+});
+
+// ajouter une langue
+router.put("/addLanguage/:token", (req, res) => {
+  const { token } = req.params;
+  const { language } = req.body;
+
+  User.findOneAndUpdate(
+    {
+      token,
+    },
+    { $push: { languagesSpoken: language } }
+  ).then((findUser) => {
+    if (!findUser) {
+      res.json({
+        result: false,
+        error: "could not find user",
+      });
+    } else {
+      res.json({
+        result: true,
+        msg: "added new language",
+      });
+    }
+  });
+});
+
+router.put("/removeLanguage/:token", (req, res) => {
+  const { token } = req.params;
+  const { language } = req.body;
+
+  User.findOneAndUpdate(
+    { token },
+    { $pull: { languagesSpoken: language } }
+  ).then((findUser) => {
+    if (!findUser) {
+      res.json({
+        result: false,
+        error: "could not find user",
+      });
+    } else {
+      res.json({
+        result: true,
+        msg: "removed language",
+      });
+    }
+  });
+});
 
 // ajouter une carte de paiement
 router.put("/updatePaymentMethod/:token", (req, res) => {
@@ -360,4 +428,3 @@ router.delete("/delete/:token", (req, res) => {
 });
 
 module.exports = router;
-
