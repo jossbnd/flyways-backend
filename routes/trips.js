@@ -29,6 +29,8 @@ const pusher = new Pusher({
 // DELETE /removeTrip: supprime un trip
 // PUT /search: chercher des trips
 // POST /postmessage: nouveau message dans le chat du trip
+// PUT /joinchat: rejoindre une room de chat Pusher
+// PUT /leave: quitter une room de chat Pusher
 
 router.get("/", (req, res) => {
   res.send("flyways trips index");
