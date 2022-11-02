@@ -1,14 +1,11 @@
 const mongoose = require("mongoose");
 
-const reviewSubdocSchema = mongoose.Schema({
+const reviewSchema = mongoose.Schema({
+  userToken: String, // utilisateur qui est noté
   authorToken: String, // utilisateur qui laisse l'avis
   score: Number,
   text: String,
-});
-
-const reviewSchema = mongoose.Schema({
-  userToken: String, // utilisateur qui est noté
-  reviews: [reviewSubdocSchema],
+  date: Date,
 });
 
 const Review = mongoose.model("reviews", reviewSchema);

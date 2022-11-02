@@ -5,10 +5,6 @@ const bcrypt = require("bcrypt");
 const moment = require("moment");
 const User = require("../models/user");
 
-const uniqid = require("uniqid");
-const cloudinary = require("cloudinary").v2;
-const fs = require("fs");
-
 // liste des routes:
 // GET /all: montre tous les utilisateurs
 // POST /signup: enregistrer un nouvel utilisateur

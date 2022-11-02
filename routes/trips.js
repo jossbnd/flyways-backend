@@ -29,6 +29,8 @@ const pusher = new Pusher({
 // DELETE /removeTrip: supprime un trip
 // PUT /search: chercher des trips
 // POST /postmessage: nouveau message dans le chat du trip
+// PUT /joinchat: rejoindre une room de chat Pusher
+// PUT /leave: quitter une room de chat Pusher
 
 router.get("/", (req, res) => {
   res.send("flyways trips index");
@@ -327,12 +329,12 @@ router.put("/search", (req, res) => {
 });
 
 // Post a message on the trip discussions
-router.post("/postmessage/:token", (req, res) => {
+router.post("/postmessage/:token", async (req, res) => {
   const message = req.body;
   const { token } = req.params;
 
   // Envoi du message sur Pusher
-  pusher.trigger(token, "message", message);
+  await pusher.trigger(token, "message", message);
 
   Trip.updateOne({ token }, { $push: { messages: message } }).then((data) => {
     if (data.modifiedCount) {
