@@ -10,12 +10,6 @@ const passengerSchema = mongoose.Schema({
   languagesSpoken: [String] || null,
 });
 
-const airportInfoSchema = mongoose.Schema({
-  name: String, // nom de l'aéroport
-  terminal: String,
-  gate: String,
-});
-
 const coordSchema = mongoose.Schema({
   latitude: Number,
   longitude: Number,

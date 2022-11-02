@@ -80,6 +80,9 @@ router.post("/create", (req, res) => {
   const token = uid2(32);
 
   User.findOne({ token: passengerToken }).then((leader) => {
+    // let tripDate = moment(date).toDate(); // local date
+
+
     const newTrip = new Trip({
       token,
       passengers: {
@@ -234,7 +237,6 @@ router.delete("/removeTrip", (req, res) => {
 
 // chercher des trips
 router.put("/search", (req, res) => {
-  // take search parameters: date, departure, destination
   // output the non-full trips closest to your destination
   if (
     !checkFieldsRequest(req.body, [
@@ -282,8 +284,6 @@ router.put("/search", (req, res) => {
         .add(rangeTime, "m")
         .toDate();
       console.log(maxDateFormatted);
-
-      // expects: "20/01/2020 09:15" (local)
 
       if (
         dist <= maxDist &&
