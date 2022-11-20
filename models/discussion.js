@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
  
+// NOTE: ce modèle n'est finalement pas utilisé, les discussions (chat) ont été intégrées en tant que sous-document des trips
 const messageSchema = mongoose.Schema({
     firstName: String,
     token: String,

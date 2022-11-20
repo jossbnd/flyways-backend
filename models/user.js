@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+// NOTE: airportInfo et addressSchema ne sont finalement pas utilisés
 const bankInfoSchema = mongoose.Schema({
   cardType: String,
   firstName: String,

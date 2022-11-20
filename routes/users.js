@@ -6,7 +6,6 @@ const moment = require("moment");
 const User = require("../models/user");
 
 // liste des routes:
-// GET /all: montre tous les utilisateurs
 // POST /signup: enregistrer un nouvel utilisateur
 // POST /signin: se connecter
 // GET /info: cherche les infos utilisateur pour le profil
@@ -24,14 +23,6 @@ const { testPassword } = require("../modules/passwordValidityCheck");
 
 router.get("/", (req, res) => {
   res.send("flyways users index");
-});
-
-router.get("/all", (req, res) => {
-  User.find().then((allUsers) =>
-    res.json({
-      allUsers,
-    })
-  );
 });
 
 // liste des checks (dans cet ordre):
@@ -90,6 +81,7 @@ router.post("/signup", (req, res) => {
     const token = uid2(32);
 
     // transforme la date (string) en date JS
+    // stocke la date de naissance en minuit UTC
     const dobLocal = moment(dob, "DD/MM/YYYY").toDate(); // local date
     const t = dobLocal.getTimezoneOffset(); // calcule la différence entre UTC et local
     const dobMidnightUtc = new Date(dobLocal.getTime() - t * 60000); // stocke la date de naissance en UTC minuit
@@ -323,6 +315,7 @@ router.put("/addLanguage/:token", (req, res) => {
   });
 });
 
+// supprimer une langue
 router.put("/removeLanguage/:token", (req, res) => {
   const { token } = req.params;
   const { language } = req.body;

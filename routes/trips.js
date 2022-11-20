@@ -22,7 +22,6 @@ const pusher = new Pusher({
 });
 
 // liste des routes:
-// GET /all: montre tous les trips
 // POST /create: créée un nouveau trip
 // PUT /addPassenger: ajoute un passager à un trip
 // PUT /removePassenger: supprime un passager d'un trip
@@ -35,14 +34,6 @@ const pusher = new Pusher({
 
 router.get("/", (req, res) => {
   res.send("flyways trips index");
-});
-
-router.get("/all", (req, res) => {
-  Trip.find().then((allTrips) =>
-    res.json({
-      allTrips,
-    })
-  );
 });
 
 // créer un nouveau trip
@@ -76,15 +67,13 @@ router.post("/create", (req, res) => {
     arrivalCoordsLat,
     arrivalCoordsLong,
     arrivalDescription,
-    date, // Mon Oct 24 2022 12:33:50 GMT+0200
+    date,
     capacity,
   } = req.body;
 
   const token = uid2(32);
 
   User.findOne({ token: passengerToken }).then((leader) => {
-    // let tripDate = moment(date).toDate(); // local date
-
     const newTrip = new Trip({
       token,
       passengers: {
@@ -94,7 +83,7 @@ router.post("/create", (req, res) => {
         lastName: leader.lastName,
         profilePicture: leader.profilePicture,
         rating: leader.averageRating,
-        languagesSpoken: leader.languagesSpoken, // FIXME: creates broken "languagesSpoken" array
+        languagesSpoken: leader.languagesSpoken,
       },
       departureCoords: {
         latitude: departureCoordsLat,
@@ -153,7 +142,6 @@ router.put("/addPassenger", (req, res) => {
   Trip.findOne({ _id: tripId }).then((trip) => {
     // si le trip est complet, stop
     if (trip.isFull) {
-      console.log(trip);
       res.json({
         result: false,
         error: "trip is full",
@@ -162,13 +150,10 @@ router.put("/addPassenger", (req, res) => {
     }
 
     // si le trip n'est pas complet, ajoute un nouveau passager
-    // add user.find here
     User.findOneAndUpdate(
       { token: passengerToken }, // trouve un utilisateur avec son token
       { $push: { trips: tripId } } // push le trip dans son tableau
     ).then((user) => {
-      console.log(user);
-
       const newPassenger = {
         isLeader: false,
         passengerToken,
@@ -239,7 +224,7 @@ router.delete("/removeTrip", (req, res) => {
 
 // chercher des trips
 router.put("/search", (req, res) => {
-  // output the non-full trips closest to your destination
+  // renvoie les trips non-full les plus proches de la destination
   if (
     !checkFieldsRequest(req.body, [
       "departureCoordsLat",
@@ -285,7 +270,6 @@ router.put("/search", (req, res) => {
       let maxDateFormatted = moment(minDateFormatted)
         .add(rangeTime, "m")
         .toDate();
-      console.log(maxDateFormatted);
 
       if (
         dist <= maxDist &&

@@ -4,17 +4,7 @@ const Review = require("../models/review");
 const User = require("../models/user");
 
 //Routes
-// GET /all: récupérer toutes les reviews
 // POST /post: poster une nouvelle review
-
-// récupérer toutes les reviews
-router.get("/all", (req, res) => {
-  Review.find().then((allReviews) =>
-    res.json({
-      allReviews,
-    })
-  );
-});
 
 // route pour poster une review (:userToken => personne notée)
 router.post("/post/:userToken", (req, res) => {
@@ -45,7 +35,7 @@ router.post("/post/:userToken", (req, res) => {
         if (userData.averageRating) {
           const actualAverage = userData.averageRating;
           const reviewsCount = userData.reviews.length;
-          console.log(reviewsCount)
+          console.log(reviewsCount);
 
           newAverage =
             Math.round(
